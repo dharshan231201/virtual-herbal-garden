@@ -9,9 +9,7 @@ function PlantList({ user, userBookmarks, onBookmarkToggled, showBookmarkedOnly 
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [submittedSearchTerm, setSubmittedSearchTerm] = useState('');
-
-  // const API_BASE_URL = 'http://127.0.0.1:8001';
-  const API_BASE_URL = 'http://localhost:8005';
+  const API_BASE_URL = 'http://3.83.150.152:8005';
   const fetchPlants = useCallback(async () => {
     const controller = new AbortController();
     const signal = controller.signal;

@@ -12,8 +12,7 @@ import AIChatAssistant from './components/AIChatAssistant';
 import IdentifyPlant from './components/IdentifyPlant';
 import Home from './components/Home'; // NEW IMPORT: Home component
 
-const API_BASE_URL = 'http://herbal-backend-container:8005';
-//const API_BASE_URL = 'http://192.168.10.13:8005'; // THIS MUST BE YOUR SERVER'S ACTUAL IP AND PORT 8005
+const API_BASE_URL = 'http://3.83.150.152:8005'; // THIS MUST BE YOUR SERVER'S ACTUAL IP AND PORT 8005
 
 function App() {
     const [user, setUser] = useState(null);
