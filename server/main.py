@@ -40,6 +40,36 @@ app.add_middleware(
 )
 # --- End CORS Configuration ---
 
+
+
+@app.get("/health")
+async def health_check():
+    db_status = {"database": "unreachable"} # Default status if something goes wrong
+
+    try:
+        # Attempt to get a database session
+        with get_db() as db: # This uses the dependency to get a session
+            # Execute a simple query to test the connection
+            # The 'text("SELECT 1")' is a common, lightweight way to test connectivity
+            db.execute(text("SELECT 1"))
+            db_status = {"database": "connected"}
+    except Exception as e:
+        # If any exception occurs during DB connection or query, mark it as failed
+        db_status = {"database": "failed", "error": str(e)}
+        # You might raise an HTTPException here if you want the health check itself to return a 500
+        # raise HTTPException(status_code=500, detail="Database connection failed")
+
+    # Return a comprehensive status
+    return {
+        "status": "ok" if db_status["database"] == "connected" else "degraded",
+        "message": "Backend is healthy" if db_status["database"] == "connected" else "Backend health degraded",
+        "dependencies": {
+            "database": db_status
+        }
+    }
+
+
+
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the Virtual Herbal Garden API!"}
