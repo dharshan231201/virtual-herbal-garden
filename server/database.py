@@ -11,8 +11,7 @@ import os # Import os to use environment variables
 # Replace with your actual PostgreSQL connection details
 # Format: "postgresql://USER:PASSWORD@HOST:PORT/DATABASE_NAME"
 # Ensure these match the user and database you created.
-# DATABASE_URL = "postgresql://postgres:Finiteloop123@localhost:5432/Plant"
-DATABASE_URL = "postgresql://postgres:Finiteloop123@192.168.10.13:5432/Plant"
+DATABASE_URL = "postgresql://dharshan:dharshan@plants-aws-instance.c6biiy4ksjl9.us-east-1.rds.amazonaws.com:5432/PlantAWS"
 # Create the SQLAlchemy engine
 engine = create_engine(
     DATABASE_URL, pool_pre_ping=True

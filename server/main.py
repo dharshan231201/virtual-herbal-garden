@@ -25,14 +25,10 @@ app = FastAPI()
 origins = [
     "http://localhost",
     "http://localhost:2001",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    "http://127.0.0.1:2001",
+    "http://3.83.150.152:2001", #public IP
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://192.168.10.13:2001",
-    "http://127.0.0.1:2001",
-    f"http://192.168.10.13:2001", # Your React app's default address
-    # You might add other origins here if your frontend is deployed elsewhere
 ]
 
 app.add_middleware(
