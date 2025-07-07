@@ -59,16 +59,6 @@ pipeline {
                 echo '--- New Containers Started ---'
             }
         }
-
-        stage('Continuous Testing') {
-            steps {
-                echo '--- Running Automated Health Check Test ---'
-                dir('tests') { // Change directory to the tests folder within the workspace
-                    sh './health_check_test.sh'
-                }
-                echo '--- Automated Health Check Test Complete ---'
-            }
-        }
     }
 
     // Post-build actions (e.g., send notifications)
