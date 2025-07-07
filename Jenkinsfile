@@ -1,12 +1,12 @@
 Pipeline{
- Agent any #  any user can make use of this groovy script in jenkins
+ Agent any //any user can make use of this groovy script in jenkins
 Stages{
 
 stage(‘clean Docker environment’){
     steps{
         echo ' stopping existing application'
-        sh 'docker stop virtual-herbal-garden-frontend-container || true' # which means true is used to prevent the sript from failing 
-        sh 'docker stop virtual-herbal-garden-backend-container || true' # which means true is used to prevent the sript from failing   
+        sh 'docker stop virtual-herbal-garden-frontend-container || true' // which means true is used to prevent the sript from failing 
+        sh 'docker stop virtual-herbal-garden-backend-container || true' // which means true is used to prevent the sript from failing   
         sh ' docker system prune -a -f'   
     }
 }
