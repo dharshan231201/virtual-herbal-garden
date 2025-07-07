@@ -59,6 +59,14 @@ pipeline {
                 echo '--- New Containers Started ---'
             }
         }
+        stage('Approve Deployment') {
+           steps {
+                echo '--- Waiting for Manual Approval to Proceed ---'
+                input message: 'Deployment to Production?', ok: 'Yes, deploy!'
+                echo 'Deployment approved! Proceeding to next steps (e.g., Production deployment).'
+            }
+        }
+
     }
 
     // Post-build actions (e.g., send notifications)
