@@ -2,16 +2,17 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os # Import os to use environment variables
+from dotenv import load_dotenv
 
-# Use environment variables for sensitive data like database credentials
-# It's highly recommended to use a .env file and load it, but for simplicity
-# we'll use direct strings for now. In production, ALWAYS use environment variables.
-# Example: DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@host:port/database")
+load_dotenv()
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+POSTGRES_DB = os.getenv("POSTGRES_DB")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT")
 
-# Replace with your actual PostgreSQL connection details
-# Format: "postgresql://USER:PASSWORD@HOST:PORT/DATABASE_NAME"
-# Ensure these match the user and database you created.
-DATABASE_URL = "postgresql://dharshan:dharshan@plants-aws-instance.c6biiy4ksjl9.us-east-1.rds.amazonaws.com:5432/PlantAWS"
+DATABASE_URL = (f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}")
+
 # Create the SQLAlchemy engine
 engine = create_engine(
     DATABASE_URL, pool_pre_ping=True

@@ -11,7 +11,9 @@ function AIChatAssistant() {
 
     const messagesEndRef = useRef(null);
 
-    const API_BASE_URL = 'http://3.83.150.152:8005';
+    // const API_BASE_URL = 'http://127.0.0.1:8001';
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    //const API_BASE_URL = 'http://localhost:8005';
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);

@@ -4,8 +4,9 @@ import { Link } from 'react-router-dom';
 import { FaBookmark, FaRegBookmark } from 'react-icons/fa';
 
 function PlantCard({ plant, user, userBookmarks, onBookmarkToggled }) {
-
-    const API_BASE_URL = 'http://3.83.150.152:8005';
+    // const API_BASE_URL = 'http://127.0.0.1:8001';
+    // const API_BASE_URL = 'http://localhost:8005';
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const isBookmarked = userBookmarks.has(plant.plant_id);
 
     const handleBookmark = async (event) => {
