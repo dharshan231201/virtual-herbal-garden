@@ -9,7 +9,8 @@ function IdentifyPlant() {
     const [error, setError] = useState(null);
 
     // const API_BASE_URL = 'http://127.0.0.1:8001'; // Make sure this matches your FastAPI backend port
-    const API_BASE_URL = 'http://localhost:8005';
+    //const API_BASE_URL = 'http://localhost:8005';
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const handleImageChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             const selectedImage = e.target.files[0];

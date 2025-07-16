@@ -11,8 +11,9 @@ import PlantDetail from './components/PlantDetail';
 import AIChatAssistant from './components/AIChatAssistant';
 import IdentifyPlant from './components/IdentifyPlant';
 import Home from './components/Home'; // NEW IMPORT: Home component
-
-const API_BASE_URL = 'http://herbal-backend-container:8005';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+//const API_BASE_URL = 'http://localhost:8005';
+//const API_BASE_URL = 'http://herbal-backend-container:8005';
 //const API_BASE_URL = 'http://192.168.10.13:8005'; // THIS MUST BE YOUR SERVER'S ACTUAL IP AND PORT 8005
 
 function App() {
