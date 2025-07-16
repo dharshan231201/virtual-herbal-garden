@@ -24,5 +24,6 @@
 /clinet/*.sw?
 /clinet/.env
 /server/.env
-/server/__pycache__
+/server/__pycache__/
 /server/logs
+__pycache__/
