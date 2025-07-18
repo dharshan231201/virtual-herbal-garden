@@ -1,0 +1,22 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: herbal-garden-cluster # A name for your EKS cluster
+  region: us-east-1 # IMPORTANT: Set this to your chosen AWS region (e.g., us-east-1, eu-west-1, ap-south-1)
+  version: "1.28" # The Kubernetes version for your cluster. 1.28 is a good stable choice.
+
+nodeGroups:
+  - name: herbal-garden-nodes # A name for the group of worker nodes
+    instanceType: t3.medium # EC2 instance type for worker nodes. t3.medium is a good start for small apps.
+    desiredCapacity: 2 # Number of worker nodes to start with. 2 provides some redundancy.
+    minSize: 1 # Minimum number of worker nodes (for autoscaling)
+    maxSize: 3 # Maximum number of worker nodes (for autoscaling)
+    volumeSize: 20 # Root volume size (in GB) for worker nodes
+    ssh:
+      allow: true # Set to 'true' to allow SSH into worker nodes (useful for debugging)
+      publicKeyPath: ~/.ssh/id_rsa.pub # <<< IMPORTANT: Replace with the actual full path to your SSH PUBLIC KEY (.pub file)!
+    labels: # Optional Kubernetes labels for your nodes
+      app: herbal-garden
+    tags: # Optional AWS tags for the underlying EC2 instances
+      project: virtual-herbal-garden

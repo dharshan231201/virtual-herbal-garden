@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: herbal-garden-frontend-deployment
+  labels:
+    app: herbal-garden-frontend-application-label
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: herbal-garden-frontend-container
+  template:
+    metadata:
+      labels:
+        app: herbal-garden-frontend-container
+    spec:
+      containers:
+        - name: herbal-garden-frontend-container
+          image: {{ .Values.frontend.image.repository }}
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.frontend.service.targetPort }}
+              name: http
+              protocol: TCP

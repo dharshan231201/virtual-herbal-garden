@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: herbal-garden-backend-service
+  labels:
+    app: herbal-garden-backend-service-label
+spec:
+  type: {{ .Values.backend.service.type }}
+  selector:
+    app: herbal-backend-container
+  ports:
+    - port: {{ .Values.backend.service.port }}
+      targetPort: http
+      protocol: TCP

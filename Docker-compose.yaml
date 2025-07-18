@@ -1,0 +1,41 @@
+version: "3.8"
+services:
+  backend:
+    image: herbal-backend-image:latest
+    container_name: herbal-backend-container
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      - MY_NAME=Dharshan
+      - GEMINI_API_KEY=AIzaSyDU2IRX8vjA5dtEfcuJ6IRAKuv4Ij1CBL4
+
+      - POSTGRES_USER=dharshan
+      - POSTGRES_PASSWORD=dharshan
+      - POSTGRES_DB=PlantAWS
+      - POSTGRES_HOST=plants-aws-instance.c6biiy4ksjl9.us-east-1.rds.amazonaws.com
+      - POSTGRES_PORT=5432
+
+      - CORS_ORIGINS=http://localhost:2001,http://127.0.0.1:2001
+    volumes:
+      - .:/app
+    ports:
+      - 8005:8005
+    restart: always
+
+  frontend:
+    image: herbal-frontend-image:latest
+    container_name: herbal-frontend-container
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      target: Final
+      args:
+        - VITE_API_BASE_URL=http://localhost:8005
+    volumes:
+      - .:/app
+    ports:
+      - 2001:80
+    depends_on:
+      - backend
+    restart: always

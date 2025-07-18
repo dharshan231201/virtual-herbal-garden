@@ -1,0 +1,26 @@
+replicaCount: 1
+frontend:
+  image:
+    repository:  dharshan9945/herbal-frontend-localhost
+    pullPolicy: IfNotPresent #kelbeku
+    tag: "latest"
+  service:
+    type: LoadBalancer  
+    port: 2001 #Host Port
+    targetPort: 80 # container port
+
+backend:
+  image: 
+    repository:  dharshan9945/herbal-backend-localhost
+    tag: "latest"
+    pullPolicy: IfNotPresent #kelbeku
+  service:
+    type: ClusterIP
+    port: 8005 #Host Port
+    targetPort: 8005 # container port
+
+
+
+
+    
+

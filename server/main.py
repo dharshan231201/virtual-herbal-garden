@@ -5,7 +5,7 @@ from sqlalchemy import text
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List
 import os
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
 from .database import get_db, engine
 from . import schemas
@@ -16,22 +16,14 @@ from fastapi import UploadFile, File
 from PIL import Image
 import io
 
-load_dotenv()
+#load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = FastAPI()
+CORS_ORIGINS_STR = os.getenv("CORS_ORIGINS")
 
 # --- CORS Configuration ---
-origins = [
-    "http://localhost",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:2001",
-    "http://127.0.0.1:2001",
-
-]
+origins = [origin.strip() for origin in CORS_ORIGINS_STR.split(',')]
 
 app.add_middleware(
     CORSMiddleware,
