@@ -1,17 +1,38 @@
+# # Stage 1: Build the React application
+# FROM node:20-alpine AS builder
+# ARG VITE_API_BASE_URL
+
+# WORKDIR /app/client
+# COPY . .
+# RUN npm install
+# RUN VITE_API_BASE_URL=$VITE_API_BASE_URL npm run build
+
+# FROM nginx:alpine As Final
+# COPY --from=builder /app/client/dist /usr/share/nginx/html
+# COPY nginx.conf /etc/nginx/nginx.conf
+# EXPOSE 80
+# CMD ["nginx", "-g", "daemon off;"]
+#==============================================
 # Stage 1: Build the React application
 FROM node:20-alpine AS builder
-ARG VITE_API_BASE_URL
-
 WORKDIR /app/client
 COPY . .
 RUN npm install
-RUN VITE_API_BASE_URL=$VITE_API_BASE_URL npm run build
+RUN npm run build
 
 FROM nginx:alpine As Final
 COPY --from=builder /app/client/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 EXPOSE 80
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
+#====================================================
+
+
+
+
 
 
 

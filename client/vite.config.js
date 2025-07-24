@@ -11,4 +11,11 @@ export default defineConfig({
     react(), // Keep existing plugins
     tailwindcss(), // Add the tailwindcss plugin
   ],
+  define: {
+    // This makes Vite embed a placeholder if VITE_API_BASE_URL is not set during build.
+    // It's crucial for the runtime injection.
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify(
+      process.env.URL || '__VITE_API_BASE_URL_PLACEHOLDER__'
+    ),
+  },
 })

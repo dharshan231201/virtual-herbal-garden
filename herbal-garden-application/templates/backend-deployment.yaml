@@ -6,7 +6,7 @@ metadata:
     app: herbal-garden-backend-deployment-label
 spec:
   replicas: {{ .Values.replicaCount }}
-  selector:       
+  selector:
     matchLabels:
       app: herbal-backend-container
   template:
@@ -22,4 +22,40 @@ spec:
             - containerPort: {{ .Values.backend.service.targetPort }}
               name: http
               protocol: TCP
-            
+          env:
+            # Non-sensitive variables directly
+            - name: MY_NAME
+              value: "Dharshan"
+            - name: CORS_ORIGINS
+              value: {{ .Values.backend.env.CORS_ORIGINS | quote }} # Added service name for internal comms
+
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: herbal-backend-secrets
+                  key: GEMINI_API_KEY
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: herbal-backend-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: herbal-backend-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: herbal-backend-secrets
+                  key: POSTGRES_DB
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: herbal-backend-secrets
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: herbal-backend-secrets
+                  key: POSTGRES_PORT

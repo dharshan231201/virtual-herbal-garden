@@ -1,26 +1,26 @@
 replicaCount: 1
 frontend:
   image:
-    repository:  dharshan9945/herbal-frontend-localhost
+    repository: dharshan9945/herbal-frontend-final-image
     pullPolicy: IfNotPresent #kelbeku
     tag: "latest"
   service:
-    type: LoadBalancer  
+    type: LoadBalancer
     port: 2001 #Host Port
     targetPort: 80 # container port
+  env:
+    VITE_API_BASE_URL: http://34.12.77.116 #http://34.118.234.243:8005
 
 backend:
-  image: 
-    repository:  dharshan9945/herbal-backend-localhost
+  image:
+    repository: dharshan9945/herbal-backend-final-image
     tag: "latest"
     pullPolicy: IfNotPresent #kelbeku
   service:
     type: ClusterIP
     port: 8005 #Host Port
     targetPort: 8005 # container port
-
-
-
-
-    
-
+  env:
+    # ... other environment variables
+    CORS_ORIGINS: http://34.12.154.141:2001,http://localhost:2001,http://127.0.0.1:2001
+ 

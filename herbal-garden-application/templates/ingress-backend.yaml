@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: herbal-backend-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false" 
+    # Otherwise, for HTTPS, you'd configure cert-manager or manually provide a secret
+    # nginx.ingress.kubernetes.io/force-ssl-redirect: "true" # Optional: Forces redirect HTTP to HTTPS
+spec:
+  ingressClassName: nginx # This is crucial to tell Nginx Ingress Controller to manage this Ingress
+  rules:
+  # - host: api.herbal-garden.com # <--- REPLACE WITH YOUR DESIRED API DOMAIN (e.g., api.yourdomain.com)
+    - http:
+       paths:
+       - path: /
+         pathType: Prefix # Catches all paths starting with /
+         backend:
+          service:
+            name: herbal-garden-backend-service # Name of your backend ClusterIP service
+            port:
+              number: 8005 # Port your backend service exposes
+  # Uncomment and configure the tls section when you have a certificate secret ready
+  # tls:
+  # - hosts:
+  #   - api.herbal-garden.com # Your domain
+  #   secretName: herbal-garden-api-tls-secret # Kubernetes Secret containing your TLS certificate and key
