@@ -32,8 +32,9 @@ def get_db():
 '''
 
 # server/database.py
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import OperationalError, DisconnectionError, InterfaceError
 import os # Import os to use environment variables
 #from dotenv import load_dotenv # REMOVE or COMMENT THIS LINE WHEN RUNNING WITH DOCKER COMPOSE
 
@@ -71,9 +72,28 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Dependency to get a database session
+# def get_db():
+#     db = SessionLocal()
+#     try:
+#         yield db
+#     finally:
+#         db.close()
+
 def get_db():
-    db = SessionLocal()
+    db = None
     try:
+        db = SessionLocal() # Attempt to get a session
+        # Perform a quick connection test immediately
+        db.execute(text("SELECT 1")) # This will raise if the connection fails
         yield db
+    except (OperationalError, DisconnectionError, InterfaceError) as e:
+        # Catch common SQLAlchemy database connection/operational errors
+        print(f"Database connection error: {e}") # Log the error
+        raise e # Re-raise the exception so FastAPI's dependency injection sees it
+    except Exception as e:
+        # Catch any other unexpected errors during session creation/test
+        print(f"An unexpected error occurred in get_db: {e}")
+        raise e
     finally:
-        db.close()
+        if db:
+            db.close() # Ensure the session is closed

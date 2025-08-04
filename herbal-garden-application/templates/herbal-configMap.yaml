@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: herbal-garden-config
+data:
+  frontend-VITE_API_BASE_URL: http://35.230.189.238
+  backend-CORS_ORIGINS: {{ .Values.backend.env.CORS_ORIGINS | quote }}

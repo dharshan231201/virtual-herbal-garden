@@ -1,26 +1,153 @@
-replicaCount: 1
+# values.yaml
+replicaCount: 1 # Recommend at least 2 for backend for high availability and zero-downtime updates
+
 frontend:
+  deployment_name: herbal-garden-frontend-deployment
+  deployment_label: herbal-garden-frontend-deployment-label
+  pod_label: herbal-garden-frontend-pod
+  container_name: herbal-garden-frontend-container
+  service_name: herbal-garden-frontend-service
+  service_label: herbal-garden-frontend-service-label
+
   image:
     repository: dharshan9945/herbal-frontend-final-image
-    pullPolicy: IfNotPresent #kelbeku
-    tag: "latest"
+    pullPolicy: IfNotPresent
+    tag: 1.0.0
   service:
-    type: LoadBalancer
-    port: 2001 #Host Port
-    targetPort: 80 # container port
-  env:
-    VITE_API_BASE_URL: http://34.12.77.116 #http://34.118.234.243:8005
+    type: LoadBalancer # Exposes your frontend externally
+    port: 2001         # External port users connect to
+    targetPort: 80     # Container port where your frontend serves (e.g., Nginx, React dev server)
+
+  resources:
+    requests:
+      cpu: "50m"  # The scheduler will only place this pod on a node that has at least 50m of CPU available
+      memory: "150Mi" # The scheduler will only place this pod on a node that has at least 150Mi of memory available.
+    limits:
+      cpu: "500m"    # If the pod tries to use more than 500m of CPU, it will be throttled and its performance will slow down, but the pod will not be killed.
+      memory: "512Mi"  # If the pod tries to use more than 512Mi, it will be immediately terminated by Kubernetes with an "OOMKilled" (Out Of Memory) status.
+
 
 backend:
+  deployment_name: herbal-garden-backend-deployment
+  deployment_label: herbal-garden-backend-deployment-label
+  pod_label: herbal-backend-pod
+  container_name: herbal-backend-container
+  service_name: herbal-garden-backend-service
+  service_label: herbal-garden-backend-service-label
+
   image:
     repository: dharshan9945/herbal-backend-final-image
-    tag: "latest"
-    pullPolicy: IfNotPresent #kelbeku
+    tag: 1.0.0
+    pullPolicy: IfNotPresent
   service:
-    type: ClusterIP
-    port: 8005 #Host Port
-    targetPort: 8005 # container port
+    type: ClusterIP # Internal service, not directly exposed outside the cluster
+    port: 8005      # Service port within the cluster
+    targetPort: 8005 # Container port where your FastAPI app listens (Crucial: Must match your app's Uvicorn port!)
   env:
-    # ... other environment variables
-    CORS_ORIGINS: http://34.12.154.141:2001,http://localhost:2001,http://127.0.0.1:2001
- 
+    # Environment variables from ConfigMaps (non-sensitive)
+    CORS_ORIGINS: http://34.48.253.192:2001,http://localhost:2001,http://127.0.0.1:2001 # Adjust based on your frontend's actual deployed URLs
+
+  # --- Secret Environment Variables Configuration ---
+  # This map defines which environment variables your application needs
+  # and which keys from which Kubernetes Secrets they should pull their values from.
+  envSecrets:
+    # The key here "herbal-backend-secrets" must EXACTLY match the 'metadata.name' of your Kubernetes Secret
+    herbal-backend-secrets:
+      # Left side (key): The environment variable name inside your container (e.g., POSTGRES_USER)
+      # Right side (value): The key name within the Kubernetes Secret (e.g., POSTGRES_USER)
+      # Note: They can be different (e.g., MY_DB_USER: POSTGRES_USER_IN_SECRET)
+      GEMINI_API_KEY: GEMINI_API_KEY
+      POSTGRES_USER: POSTGRES_USER
+      POSTGRES_PASSWORD: POSTGRES_PASSWORD
+      POSTGRES_DB: POSTGRES_DB
+      POSTGRES_HOST: POSTGRES_HOST
+      POSTGRES_PORT: POSTGRES_PORT
+
+  # --- Probe Configurations ---
+  # Define the parameters for Liveness, Readiness, and (optionally) Startup probes.
+  probes:
+    liveness:
+      enabled: true
+      path: / # Use a very light-weight endpoint, like / or a dedicated /liveness
+      port: 8005 # Must match backend.service.targetPort
+      initialDelaySeconds: 30 # Give the app ample time to fully initialize before first liveness check
+      periodSeconds: 20       # Check every 20 seconds
+      timeoutSeconds: 5       # Allow 5 seconds for a response
+      failureThreshold: 3     # Restart container after 3 consecutive failures
+
+    readiness:
+      enabled: true
+      path: /health # Your comprehensive health check (checks DB connectivity)
+      port: 8005 # Must match backend.service.targetPort
+      initialDelaySeconds: 15 # Can be shorter than liveness, as we want to know readiness sooner
+      periodSeconds: 10       # Check every 10 seconds (more frequently for readiness)
+      timeoutSeconds: 5       # Allow 5 seconds for a response
+      failureThreshold: 3     # Mark pod as Not Ready after 3 consecutive failures
+
+  resources:
+    requests:
+      cpu: "50m"  # The scheduler will only place this pod on a node that has at least 50m of CPU available
+      memory: "150Mi" # The scheduler will only place this pod on a node that has at least 150Mi of memory available.
+    limits:
+      cpu: "500m"    # If the pod tries to use more than 500m of CPU, it will be throttled and its performance will slow down, but the pod will not be killed.
+      memory: "512Mi"  # If the pod tries to use more than 512Mi, it will be immediately terminated by Kubernetes with an "OOMKilled" (Out Of Memory) status.
+
+  hpa:
+    hpa_name: herbal-garden-backend-hpa
+    hpa_label: herbal-garden-backend-hpa-label
+    minReplicas: 2
+    maxReplicas: 5
+    cpu: 40
+    memory: 60
+
+
+#========================================================================================
+
+# limitRange:
+#   enabled: true
+#   name: herbal-garden-limit-range
+#   namespace: default
+#   pod:
+#     # Max Pod resources. Adjust this to a safe amount well below the node's allocatable limits.
+#     maxCpu: "900m"
+#     maxMemory: "2500Mi" # 2.5Gi, which is a bit less than the 2.8Gi allocatable
+#     # Min Pod resources. Should be slightly above the individual container min.
+#     minCpu: "500m"
+#     minMemory: "1.2Gi"
+#     # Default resources for a pod (if not specified). Keep this low but functional.
+#   container:
+#     # Max Container resources. This is the hard limit for a single container.
+#     maxCpu: "500m" # Keep this at half the node's allocatable CPU or less to allow multiple containers.
+#     maxMemory: "1Gi"
+#     # Min Container resources. Make sure your app works with this minimum.
+#     minCpu: "250m"
+#     minMemory: "512Mi"
+#     # Default resources for containers (if not specified).
+#     defaultCpu: "250m"
+#     defaultMemory: "512Mi"
+#     defaultRequestCpu: "250m"
+#     defaultRequestMemory: "512Mi"
+
+# ################################################################################
+# # ResourceQuota Configuration
+# ################################################################################
+# resourceQuota:
+#   enabled: true
+#   name: herbal-garden-quota
+#   namespace: default
+#   limits:
+#     # Set the total CPU and memory limits for all pods in the namespace.
+#     # A safe value is slightly below the node's total allocatable capacity.
+#     cpu: "900m" # Just under the 940m allocatable.
+#     memory: "2.5Gi" # Just under the 2.8Gi allocatable.
+#     # ... other limits and requests for storage, etc.
+#   requests:
+#     cpu: "500m" # Total CPU requests for all pods.
+#     memory: "1.5Gi" # Total memory requests for all pods.
+#   counts:
+#     pods: "10" # Limit the number of pods to a reasonable number.
+#     configmaps: "5"
+#     secrets: "6"
+#     persistentvolumeclaims: "10"
+#     deployments: "2" # Since you have a frontend and backend deployment.
+

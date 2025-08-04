@@ -1,0 +1,40 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+ name: {{ .Values.backend.hpa.hpa_name }}
+ labels:
+    app: {{ .Values.backend.hpa.hpa_label }}
+spec:
+ minReplicas: {{ .Values.backend.hpa.minReplicas }}
+ maxReplicas: {{ .Values.backend.hpa.maxReplicas }}
+ scaleTargetRef:
+  apiVersion: apps/v1
+  kind: Deployment
+  name: {{ .Values.backend.deployment_name }}
+ metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+       type: Utilization
+       averageUtilization: {{ .Values.backend.hpa.cpu }} #40% of 40m = 20mcpu when backend pod reaches more than 20m then replicas will be increased
+
+  - type: Resource
+    resource:
+      name: memory
+      target:
+       type: Utilization
+       averageUtilization: {{ .Values.backend.hpa.memory }} #60% 0f 150 =90Mi , when backend pod reaches more than 90Mi then replicas will be increased
+     
+
+#kubectl apply -f metric-server.yaml
+#then check the metric server
+#kubectl get top pods
+# in order to genereate the load 
+#kubectl run loadgenerator -i --tty --rm --image=busybox /bin/sh -n <namespace>
+#inside the bash
+#while true; do wget -q0- http://<service_name>.<name_space>.svc.<service_name>.local; done
+#on the other terminal check whether the metric server is installed
+#kubectl apply -f metric-server.yaml
+#then check the metric server
+#kubectl get top pods

@@ -1,0 +1,25 @@
+# the role is created to the user and what he can do 
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role / ClusterRole
+metadata:
+  name: dharshan-pod-manager
+  namespace: default # it is used if kind is role , otherwise the namespace is not required for cluster role
+rules:
+- apiGroups: [""] # acess is granted to Core API group ( core group : apiverion v1  , namedgroup : anything after/berfore v1 )
+  resources: ["pods", "pods/log", "pods/exec"] # to which resources do we need to give access
+  verbs: ["get", "list", "watch", "create", "delete", "update", "patch"] # actions on the resources
+
+# we are attaching the role that is created to the user 
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dharshan-pod-manager-binding
+subjects:
+- kind: User # The kind is User for a human user ,  it can also be group
+  name: dharshan # The name MUST match the CN from your CSR
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role / ClusterRole
+  name: dharshan-pod-manager
+  apiGroup: rbac.authorization.k8s.io

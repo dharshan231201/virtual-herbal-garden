@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: herbal-garden-frontend-service
+  name: {{ .Values.frontend.service_name }}
   labels:
-    app: herbal-garden-frontend-service-label
+    app: {{ .Values.frontend.service_label }}
 spec:
   type: {{ .Values.frontend.service.type }}
   selector:
-    app: herbal-garden-frontend-container
+    pod_label: {{ .Values.frontend.pod_label }}
   ports:
-    - port: {{ .Values.frontend.service.port }} # REMOVE SPACE HERE
+    - port: {{ .Values.frontend.service.port }}
       targetPort: http
       protocol: TCP

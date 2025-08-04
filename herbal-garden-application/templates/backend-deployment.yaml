@@ -1,33 +1,82 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: herbal-garden-backend-deployment
+  name: {{ .Values.backend.deployment_name }} # name of the deployment
   labels:
-    app: herbal-garden-backend-deployment-label
+    app: {{ .Values.backend.deployment_label }} # label of the deployment
 spec:
-  replicas: {{ .Values.replicaCount }}
+  #replicas: {{ .Values.replicaCount }}  # number of replicas
   selector:
     matchLabels:
-      app: herbal-backend-container
+      pod_label: {{ .Values.backend.pod_label }}
   template:
     metadata:
       labels:
-        app: herbal-backend-container
+        pod_label: {{ .Values.backend.pod_label }}
+      annotations:
+        checksum/config: {{ include "herbal-garden-application/templates/herbal-configMap.yaml" . | sha256sum }}  #if there is any chnage in the configmap then this line is used to rollout and  restart
+        checksum/values: {{ toYaml .values | sha256sum }}
     spec:
+      # while using taints and toleration you have to create a taint to the node as  : kubectl taint node <node_name> key=value:effect
+      # tolerations: 
+      # - key: "application"           # Must match the taint key
+      #   operator: "Equal"          # Or "Exists" if you don't care about the value
+      #   value: "backend"           # Must match the taint value
+      #   effect: "NoSchedule"       # Must match the taint effect
+
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #       - matchExpressions:
+      #         - key: kubernetes.io/hostname # <--- this is used only to TARGETS THE SPECIFIC NODE 
+      #           operator: In
+      #           values:
+      #           - gke-herbal-final-default-pool-415681dd-0thx
+      #         - key: app-role  # labelling the node as kubectl label node <node_name> app-role=special-backend
+      #           operator: In # Operator 'In' means the value must be one of the listed values
+      #           values:
+      #           - special-backend # The value we set on the node
+      #   podAffinity:
+      #     preferredDuringSchedulingIgnoredDuringExecution:
+      #       - weight: 100
+      #         podAffinityTerm: 
+      #           labelSelector:
+      #             matchExpressions:
+      #               - key: app
+      #                 operator: In
+      #                 values:
+      #                   - herbal-garden-frontend-container
+      #           topologyKey: "kubernetes.io/hostname"
+      #   podAntiAffinity:
+      #       requiredDuringSchedulingIgnoredDuringExecution:
+      #         - labelSelector:
+      #             matchExpressions:
+      #               - key: app
+      #                 operator: In
+      #                 values:
+      #                   - herbal-backend-container
+      #           topologyKey: "kubernetes.io/hostname"
+      
+     
       containers:
-        - name: herbal-backend-container
-          image: {{ .Values.backend.image.repository }}
+        - name: {{ .Values.backend.container_name }}
+          image: {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
           ports:
-            - containerPort: {{ .Values.backend.service.targetPort }}
+            - containerPort: {{ .Values.backend.service.targetPort }} 
               name: http
               protocol: TCP
           env:
             # Non-sensitive variables directly
             - name: MY_NAME
               value: "Dharshan"
+
             - name: CORS_ORIGINS
-              value: {{ .Values.backend.env.CORS_ORIGINS | quote }} # Added service name for internal comms
+              valueFrom:
+                configMapKeyRef:
+                  name: herbal-garden-config
+                  key: backend-CORS_ORIGINS
 
             - name: GEMINI_API_KEY
               valueFrom:
@@ -59,3 +108,23 @@ spec:
                 secretKeyRef:
                   name: herbal-backend-secrets
                   key: POSTGRES_PORT
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.backend.probes.liveness.path }} # e.g., / or /liveness
+              port: {{ .Values.backend.probes.liveness.port }} # e.g., 8000
+            initialDelaySeconds: {{ .Values.backend.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.backend.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.backend.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.backend.probes.liveness.failureThreshold }}
+
+          # === Readiness Probe ===
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.backend.probes.readiness.path }} # This will be /health
+              port: {{ .Values.backend.probes.readiness.port }} # e.g., 8000
+            initialDelaySeconds: {{ .Values.backend.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.backend.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.backend.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.backend.probes.readiness.failureThreshold }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}

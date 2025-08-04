@@ -1,0 +1,29 @@
+# herbal-garden-application/templates/limitrange.yaml
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: {{ .Values.limitRange.name }}
+  namespace: {{ .Values.limitRange.namespace }}
+spec:
+  limits:
+  - type: Pod # Rule for aggregated pod resources
+    max:
+      cpu: {{ .Values.limitRange.pod.maxCpu | quote }}
+      memory: {{ .Values.limitRange.pod.maxMemory | quote }}
+    min:
+      cpu: {{ .Values.limitRange.pod.minCpu | quote }}
+      memory: {{ .Values.limitRange.pod.minMemory | quote }}
+      
+  - type: Container # Rule for individual container resources
+    max:
+      cpu: {{ .Values.limitRange.container.maxCpu | quote }}
+      memory: {{ .Values.limitRange.container.maxMemory | quote }}
+    min:
+      cpu: {{ .Values.limitRange.container.minCpu | quote }}
+      memory: {{ .Values.limitRange.container.minMemory | quote }}
+    default:
+      cpu: {{ .Values.limitRange.container.defaultCpu | quote }}
+      memory: {{ .Values.limitRange.container.defaultMemory | quote }}
+    defaultRequest:
+      cpu: {{ .Values.limitRange.container.defaultRequestCpu | quote }}
+      memory: {{ .Values.limitRange.container.defaultRequestMemory | quote }}

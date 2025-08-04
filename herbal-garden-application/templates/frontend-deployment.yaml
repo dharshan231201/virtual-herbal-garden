@@ -1,22 +1,66 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: herbal-garden-frontend-deployment
+  name: {{ .Values.frontend.deployment_name }}
   labels:
-    app: herbal-garden-frontend-application-label
+    app: {{ .Values.frontend.deployment_label }}   # label of the deployment
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: herbal-garden-frontend-container
+      pod_label: {{ .Values.frontend.pod_label }}      # label of the container inside the pod
   template:
     metadata:
       labels:
-        app: herbal-garden-frontend-container
+        pod_label: {{ .Values.frontend.pod_label }}
+      annotations: # <--- ADD THIS SECTION
+        checksum/config: {{ include "herbal-garden-application/templates/herbal-configMap.yaml" . | sha256sum }}  #if there is any chnage in the configmap then this line is used to rollout and  restart
+        checksum/values: {{ toYaml .values | sha256sum }} # <--- ADD THIS LINE
     spec:
+
+      # tolerations:
+      # - key: "application"           # Must match the taint key
+      #   operator: "Equal"          # Or "Exists" if you don't care about the value
+      #   value: "dummy"           # Must match the taint value
+      #   effect: "NoSchedule"       # Must match the taint effect
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #       - matchExpressions:
+      #         - key: kubernetes.io/hostname # <--- TARGETS THE SPECIFIC NODE
+      #           operator: In
+      #           values:
+      #           - gke-herbal-garden-gke-cl-default-pool-db875853-snz8
+              # - key: app-role
+                # operator: In # Operator 'In' means the value must be one of the listed values
+                # values:
+                # - special-frontend # The value we set on the node
+        # podAffinity:
+        #   preferredDuringSchedulingIgnoredDuringExecution:
+        #     - weight: 100
+        #       podAffinityTerm:
+        #         labelSelector:
+        #           matchExpressions:
+        #             - key: app
+        #               operator: In
+        #               values:
+        #                 - herbal-backend-container
+        #         topologyKey: "kubernetes.io/hostname"
+
+        # podAntiAffinity:
+        #     requiredDuringSchedulingIgnoredDuringExecution:
+        #       - labelSelector:
+        #           matchExpressions:
+        #             - key: app
+        #               operator: In
+        #               values:
+        #                 - herbal-garden-frontend-container
+        #         topologyKey: "kubernetes.io/hostname"
+          
       containers:
-        - name: herbal-garden-frontend-container
-          image: {{ .Values.frontend.image.repository }}
+        - name: {{ .Values.frontend.container_name }}
+          image: {{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}
           imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.frontend.service.targetPort }}
@@ -25,4 +69,8 @@ spec:
           env:
             # VITE_API_BASE_URL should point to the Kubernetes service name
             - name: VITE_API_BASE_URL
-              value: {{ .Values.frontend.env.VITE_API_BASE_URL }}
+              valueFrom:
+                configMapKeyRef:
+                  name: herbal-garden-config
+                  key: frontend-VITE_API_BASE_URL
+             

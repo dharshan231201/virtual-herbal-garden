@@ -1,0 +1,18 @@
+# herbal-garden-application/templates/resourcequota.yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: {{ .Values.resourceQuota.name }}
+  namespace: {{ .Values.resourceQuota.namespace }}
+spec:
+  hard:
+    limits.cpu: {{ .Values.resourceQuota.limits.cpu | quote }}
+    requests.cpu: {{ .Values.resourceQuota.requests.cpu | quote }}
+    limits.memory: {{ .Values.resourceQuota.limits.memory | quote }}
+    requests.memory: {{ .Values.resourceQuota.requests.memory | quote }}
+    requests.storage: {{ .Values.resourceQuota.requests.storage | quote }}
+    pods: {{ .Values.resourceQuota.counts.pods | quote }}
+    configmaps: {{ .Values.resourceQuota.counts.configmaps | quote }}
+    secrets: {{ .Values.resourceQuota.counts.secrets | quote }}
+    persistentvolumeclaims: {{ .Values.resourceQuota.counts.persistentvolumeclaims | quote }}
+    

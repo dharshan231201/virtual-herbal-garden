@@ -36,34 +36,30 @@ app.add_middleware(
 
 
 
+
+
+#========================================================
+
 @app.get("/health")
-async def health_check():
-    db_status = {"database": "unreachable"} # Default status if something goes wrong
-
-    try:
-        # Attempt to get a database session
-        with get_db() as db: # This uses the dependency to get a session
-            # Execute a simple query to test the connection
-            # The 'text("SELECT 1")' is a common, lightweight way to test connectivity
-            db.execute(text("SELECT 1"))
-            db_status = {"database": "connected"}
-    except Exception as e:
-        # If any exception occurs during DB connection or query, mark it as failed
-        db_status = {"database": "failed", "error": str(e)}
-        # You might raise an HTTPException here if you want the health check itself to return a 500
-        # raise HTTPException(status_code=500, detail="Database connection failed")
-
-    # Return a comprehensive status
+async def health_check(db: Session = Depends(get_db)): # FastAPI will try to inject 'db'
+    # If we reach here, get_db() successfully provided a session, meaning the DB is connected.
+    # The try...except logic is now mostly handled within get_db itself.
+    # The 'db' session is automatically managed by FastAPI's dependency injection,
+    # including closing it via the 'finally' block in get_db().
     return {
-        "status": "ok" if db_status["database"] == "connected" else "degraded",
-        "message": "Backend is healthy" if db_status["database"] == "connected" else "Backend health degraded",
+        "status": "ok",
+        "message": "Backend is healthy and ready",
         "dependencies": {
-            "database": db_status
+            "database": {"status": "connected"}
         }
-    }
+    }, status.HTTP_200_OK
+
+# FastAPI's dependency injection will automatically catch the HTTPException
+# raised by get_db() if the database connection fails, and will return a 503.
+# No need for the 'else' block here anymore if we want a 503 for DB failure.
 
 
-
+#========================================================
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the Virtual Herbal Garden API!"}
@@ -288,6 +284,7 @@ def create_bookmark(bookmark: schemas.BookmarkCreate, db: Session = Depends(get_
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Error creating bookmark: {e}")
+    
 
 @app.get("/bookmarks/", response_model=list[schemas.Bookmark])
 def read_bookmarks(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

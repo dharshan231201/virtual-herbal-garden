@@ -1,12 +1,12 @@
 version: "3.8"
 services:
   backend:
-    image: herbal-backend-image:latest
-    container_name: herbal-backend-container
+    image: herbal-backend-image:1.0.0  # the image name of the conatainer
+    container_name: herbal-backend-container  # the name of the container
     build:
-      context: ./server
-      dockerfile: Dockerfile
-    environment:
+      context: ./server # based on the context of server directory 
+      dockerfile: Dockerfile # the name of the docekrfile in the server directory
+    environment: # environment variables that are being used in the project 
       - MY_NAME=Dharshan
       - GEMINI_API_KEY=AIzaSyDU2IRX8vjA5dtEfcuJ6IRAKuv4Ij1CBL4
 
@@ -24,7 +24,7 @@ services:
     restart: always
 
   frontend:
-    image: herbal-frontend-image:latest
+    image: herbal-frontend-image:1.0.0
     container_name: herbal-frontend-container
     build:
       context: ./client
