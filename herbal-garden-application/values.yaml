@@ -45,7 +45,7 @@ backend:
     targetPort: 8005 # Container port where your FastAPI app listens (Crucial: Must match your app's Uvicorn port!)
   env:
     # Environment variables from ConfigMaps (non-sensitive)
-    CORS_ORIGINS: http://34.48.253.192:2001,http://localhost:2001,http://127.0.0.1:2001 # Adjust based on your frontend's actual deployed URLs
+    CORS_ORIGINS: http://35.184.67.56:2001,http://localhost:2001,http://127.0.0.1:2001 # Adjust based on your frontend's actual deployed URLs
 
   # --- Secret Environment Variables Configuration ---
   # This map defines which environment variables your application needs
