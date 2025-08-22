@@ -1,3 +1,4 @@
+#backend-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,6 +7,8 @@ metadata:
     app: {{ .Values.backend.deployment_label }} # label of the deployment
 spec:
   #replicas: {{ .Values.replicaCount }}  # number of replicas
+  strategy: 
+   type: RollingUpdate
   selector:
     matchLabels:
       pod_label: {{ .Values.backend.pod_label }}
@@ -69,8 +72,9 @@ spec:
               protocol: TCP
           env:
             # Non-sensitive variables directly
-            - name: MY_NAME
-              value: "Dharshan"
+            # - name: MY_NAME
+            #   value: "Dharshan"
+            
 
             - name: CORS_ORIGINS
               valueFrom:
@@ -108,6 +112,7 @@ spec:
                 secretKeyRef:
                   name: herbal-backend-secrets
                   key: POSTGRES_PORT
+
           livenessProbe:
             httpGet:
               path: {{ .Values.backend.probes.liveness.path }} # e.g., / or /liveness
@@ -128,3 +133,6 @@ spec:
             failureThreshold: {{ .Values.backend.probes.readiness.failureThreshold }}
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
+          
+  
+

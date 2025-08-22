@@ -1,0 +1,24 @@
+# herbal-garden-application/templates/backend-service-monitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: herbal-garden-backend-monitor
+  namespace: monitoring
+  labels:
+    # This label is crucial for the Prometheus Operator to find this ServiceMonitor.
+    # It must match the release name of your Helm chart.
+    release: prometheus-stack
+spec:
+  # The ServiceMonitor will only scrape services in these namespaces.
+  namespaceSelector:
+    matchNames:
+    - default # Or the namespace where your backend is deployed
+  # This selector tells the ServiceMonitor which service to target.
+  # It should match the labels on your `herbal-garden-backend-service`.
+  selector:
+    matchLabels:
+      app: herbal-garden-backend-service-label                   
+  endpoints:
+  - port: http # The port name must match the name in your Service manifest.
+    path: /metrics
+    interval: 15s

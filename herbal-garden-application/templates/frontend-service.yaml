@@ -1,3 +1,4 @@
+# herbal-garden-application/templates/frontend-service.yaml
 apiVersion: v1
 kind: Service
 metadata:

@@ -1,4 +1,5 @@
-# values.yaml
+# herbal-garden-application/values.yaml
+
 replicaCount: 1 # Recommend at least 2 for backend for high availability and zero-downtime updates
 
 frontend:
@@ -12,20 +13,19 @@ frontend:
   image:
     repository: dharshan9945/herbal-frontend-final-image
     pullPolicy: IfNotPresent
-    tag: 1.0.0
+    tag: 1.0.1
   service:
-    type: LoadBalancer # Exposes your frontend externally
-    port: 2001         # External port users connect to
-    targetPort: 80     # Container port where your frontend serves (e.g., Nginx, React dev server)
+    type: ClusterIP # Exposes your frontend externally
+    port: 2001 # External port users connect to
+    targetPort: 80 # Container port where your frontend serves (e.g., Nginx, React dev server)
 
   resources:
     requests:
-      cpu: "50m"  # The scheduler will only place this pod on a node that has at least 50m of CPU available
+      cpu: "50m" # The scheduler will only place this pod on a node that has at least 50m of CPU available
       memory: "150Mi" # The scheduler will only place this pod on a node that has at least 150Mi of memory available.
     limits:
-      cpu: "500m"    # If the pod tries to use more than 500m of CPU, it will be throttled and its performance will slow down, but the pod will not be killed.
-      memory: "512Mi"  # If the pod tries to use more than 512Mi, it will be immediately terminated by Kubernetes with an "OOMKilled" (Out Of Memory) status.
-
+      cpu: "500m" # If the pod tries to use more than 500m of CPU, it will be throttled and its performance will slow down, but the pod will not be killed.
+      memory: "512Mi" # If the pod tries to use more than 512Mi, it will be immediately terminated by Kubernetes with an "OOMKilled" (Out Of Memory) status.
 
 backend:
   deployment_name: herbal-garden-backend-deployment
@@ -37,15 +37,15 @@ backend:
 
   image:
     repository: dharshan9945/herbal-backend-final-image
-    tag: 1.0.0
+    tag: 1.0.1
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP # Internal service, not directly exposed outside the cluster
-    port: 8005      # Service port within the cluster
+    port: 8005 # Service port within the cluster
     targetPort: 8005 # Container port where your FastAPI app listens (Crucial: Must match your app's Uvicorn port!)
   env:
     # Environment variables from ConfigMaps (non-sensitive)
-    CORS_ORIGINS: http://35.184.67.56:2001,http://localhost:2001,http://127.0.0.1:2001 # Adjust based on your frontend's actual deployed URLs
+    CORS_ORIGINS: "http://app.herbal-garden.com" #http://35.238.221.87:2001,http://localhost:2001,http://127.0.0.1:2001 # Adjust based on your frontend's actual deployed URLs
 
   # --- Secret Environment Variables Configuration ---
   # This map defines which environment variables your application needs
@@ -71,26 +71,26 @@ backend:
       path: / # Use a very light-weight endpoint, like / or a dedicated /liveness
       port: 8005 # Must match backend.service.targetPort
       initialDelaySeconds: 30 # Give the app ample time to fully initialize before first liveness check
-      periodSeconds: 20       # Check every 20 seconds
-      timeoutSeconds: 5       # Allow 5 seconds for a response
-      failureThreshold: 3     # Restart container after 3 consecutive failures
+      periodSeconds: 20 # Check every 20 seconds
+      timeoutSeconds: 5 # Allow 5 seconds for a response
+      failureThreshold: 3 # Restart container after 3 consecutive failures
 
     readiness:
       enabled: true
       path: /health # Your comprehensive health check (checks DB connectivity)
       port: 8005 # Must match backend.service.targetPort
       initialDelaySeconds: 15 # Can be shorter than liveness, as we want to know readiness sooner
-      periodSeconds: 10       # Check every 10 seconds (more frequently for readiness)
-      timeoutSeconds: 5       # Allow 5 seconds for a response
-      failureThreshold: 3     # Mark pod as Not Ready after 3 consecutive failures
+      periodSeconds: 10 # Check every 10 seconds (more frequently for readiness)
+      timeoutSeconds: 5 # Allow 5 seconds for a response
+      failureThreshold: 3 # Mark pod as Not Ready after 3 consecutive failures
 
   resources:
     requests:
-      cpu: "50m"  # The scheduler will only place this pod on a node that has at least 50m of CPU available
+      cpu: "50m" # The scheduler will only place this pod on a node that has at least 50m of CPU available
       memory: "150Mi" # The scheduler will only place this pod on a node that has at least 150Mi of memory available.
     limits:
-      cpu: "500m"    # If the pod tries to use more than 500m of CPU, it will be throttled and its performance will slow down, but the pod will not be killed.
-      memory: "512Mi"  # If the pod tries to use more than 512Mi, it will be immediately terminated by Kubernetes with an "OOMKilled" (Out Of Memory) status.
+      cpu: "500m" # If the pod tries to use more than 500m of CPU, it will be throttled and its performance will slow down, but the pod will not be killed.
+      memory: "512Mi" # If the pod tries to use more than 512Mi, it will be immediately terminated by Kubernetes with an "OOMKilled" (Out Of Memory) status.
 
   hpa:
     hpa_name: herbal-garden-backend-hpa
@@ -99,8 +99,6 @@ backend:
     maxReplicas: 5
     cpu: 40
     memory: 60
-
-
 #========================================================================================
 
 # limitRange:
@@ -150,4 +148,5 @@ backend:
 #     secrets: "6"
 #     persistentvolumeclaims: "10"
 #     deployments: "2" # Since you have a frontend and backend deployment.
+
 

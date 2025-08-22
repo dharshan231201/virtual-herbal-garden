@@ -1,3 +1,8 @@
+ pg_dump -U postgres -h 192.168.10.13 -p 5432 -d Plant > plant.sql
+Password: 
+ 
+ 
+ 
  2000  sudo rm -rf /usr/local/google-cloud-sdk /opt/google-cloud-sdk ~/google-cloud-sdk
  2001  sudo rm -f /etc/apt/trusted.gpg.d/google-cloud.gpg
  2002  sudo rm -f /usr/share/keyrings/cloud.google.gpg
@@ -23,8 +28,8 @@
  2022  helm install herbal-final .
  2023  kubectl get pods
  2024  kubectl get svc
- 2025* helm repo add ingress-nginx https://kubernetes.github.io/ingress-ngin
- 2026  helm install ingress-nginx ingress-nginx/ingress-nginx  --set controller.service.type=LoadBalancer
+ 2025* helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+ 2026  kubec
  2027  kubectl get svc
  2028  helm upgrade herbal-final .
  2029  history
@@ -33,4 +38,52 @@
  #  helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 # helm repo update
 # helm install ingress-nginx ingress-nginx/ingress-nginx   --namespace ingress-nginx   --create-namespace   --set controller.service.type=LoadBalancer
-# helm install ingress-nginx ingress-nginx/ingress-nginx  --set controller.service.type=LoadBalancer
+
+
+#================================== grafana & prometheus ===========================
+#docker run --rm -it -v virtual-herbal-garden_grafana-storage:/data alpine sh
+
+#=========== helm grafana and prometheus============================================
+# helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+# helm repo update
+# helm install prometheus-stack prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace
+
+
+# #==========
+# NOTES:
+# kube-prometheus-stack has been installed. Check its status by running:
+#   kubectl --namespace monitoring get pods -l "release=prometheus-stack"
+
+# Get Grafana 'admin' user password by running:
+
+#   kubectl --namespace monitoring get secrets prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 -d ; echo
+#(prom-operator)
+
+# Access Grafana local instance:
+
+#   export POD_NAME=$(kubectl --namespace monitoring get pod -l "app.kubernetes.io/name=grafana,app.kubernetes.io/instance=prometheus-stack" -oname)
+#   kubectl --namespace monitoring port-forward $POD_NAME 3000
+
+# Visit https://github.com/prometheus-operator/kube-prometheus for instructions on how to create & configure Alertmanager and Prometheus instances using the Operator.
+
+
+#  1950  kubectl port-forward svc/prometheus-stack-kube-prometheus-prometheus 9090:9090 -n monitoring
+#  1951  kubectl get services -n monitoring
+#  1952  kubectl port-forward svc/prometheus-stack-kube-prom-prometheus 9090:9090 -n monitoring
+
+
+
+# update the ip address for the prometheus 
+#(base) flgpu@flgpu-HP-Z420-Workstation:/mnt/data1Tb/workspace/dharshan/virtual-herbal-garden$ sudo nano /etc/hosts
+
+#================== ==================================================\
+#http://prometheus-stack-kube-prom-prometheus.monitoring.svc.cluster.local:9090 the url used in grafana to add the source
+
+sum((rate(http_requests_total{job="herbal-garden-backend-service", status="5xx"}[5m])))
+histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
+sum(rate(http_requests_total{job="herbal-garden-backend-service", handler="/plants/"}[5m]))
+sum(rate(node_cpu_seconds_total{mode="idle"}[5m]))
+sum(node_memory_MemAvailable_bytes)
+
+
+

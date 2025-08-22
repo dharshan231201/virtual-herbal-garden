@@ -1,26 +1,33 @@
-#  helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-# helm repo update
-# helm install ingress-nginx ingress-nginx/ingress-nginx   --namespace ingress-nginx   --create-namespace   --set controller.service.type=LoadBalancer
-# helm install ingress-nginx ingress-nginx/ingress-nginx  --set controller.service.type=LoadBalancer
-
+# herbal-garden-application/templates/ingress-backend.yaml
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: herbal-backend-ingress
+  name: {{ .Release.Name }}-loadbalancer-ingress
+  namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false" 
-    # Otherwise, for HTTPS, you'd configure cert-manager or manually provide a secret
-    # nginx.ingress.kubernetes.io/force-ssl-redirect: "true" # Optional: Forces redirect HTTP to HTTPS
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
 spec:
-  ingressClassName: nginx # This is crucial to tell Nginx Ingress Controller to manage this Ingress
+  ingressClassName: nginx
   rules:
-  # - host: api.herbal-garden.com # <--- REPLACE WITH YOUR DESIRED API DOMAIN (e.g., api.yourdomain.com)
-    - http:
-       paths:
-       - path: /
-         pathType: Prefix # Catches all paths starting with /
-         backend:
-          service:
-            name: {{ .Values.backend.service_name }} # Name of your backend ClusterIP service
-            port:
-              number: 8005 # Port your backend service exposes
+    - host: api.herbal-garden.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ .Values.backend.service_name }}"
+                port:
+                  number: 8005
+    - host: app.herbal-garden.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ .Values.frontend.service_name }}"
+                port:
+                  number: 2001

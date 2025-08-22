@@ -1,7 +1,8 @@
+# herbal-garden-application/templates/herbal-configMap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: herbal-garden-config
 data:
-  frontend-VITE_API_BASE_URL: http://34.60.0.153
+  frontend-VITE_API_BASE_URL: http://api.herbal-garden.com
   backend-CORS_ORIGINS: {{ .Values.backend.env.CORS_ORIGINS | quote }}

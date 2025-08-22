@@ -5,6 +5,7 @@ from sqlalchemy import text
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List
 import os
+from prometheus_fastapi_instrumentator import Instrumentator
 #from dotenv import load_dotenv
 
 from .database import get_db, engine
@@ -20,6 +21,10 @@ import io
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = FastAPI()
+# --- Prometheus Instrumentation ---
+# This line adds a /metrics endpoint and starts collecting metrics automatically.
+Instrumentator().instrument(app).expose(app)
+# --- End Prometheus Instrumentation ---
 CORS_ORIGINS_STR = os.getenv("CORS_ORIGINS")
 
 # --- CORS Configuration ---

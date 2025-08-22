@@ -1,0 +1,66 @@
+version: "3.8"
+services:
+  backend:
+    image: herbal-backend-image:1.0.1  # the image name of the conatainer
+    container_name: herbal-backend-container-1.0.1  # the name of the container
+    build:
+      context: ./server # based on the context of server directory 
+      dockerfile: Dockerfile # the name of the docekrfile in the server directory
+    environment: # environment variables that are being used in the project 
+      - MY_NAME=Dharshan
+      - GEMINI_API_KEY=AIzaSyDU2IRX8vjA5dtEfcuJ6IRAKuv4Ij1CBL4
+
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Finiteloop123
+      - POSTGRES_DB=Plant
+      - POSTGRES_HOST=192.168.10.13
+      - POSTGRES_PORT=5432
+
+      - CORS_ORIGINS=http://localhost:2001,http://127.0.0.1:2001,http://192.168.10.13:2001
+    volumes:
+      - .:/app
+    ports:
+      - 8005:8005
+    restart: always
+
+  frontend:
+    image: herbal-frontend-image:1.0.1
+    container_name: herbal-frontend-container-1.0.1
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      target: Final
+    environment:
+        - VITE_API_BASE_URL=http://192.168.10.13:8005
+    volumes:
+      - .:/app
+    ports:
+      - 2001:80
+    depends_on:
+      - backend
+    restart: always
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: prometheus-server
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    depends_on:
+      - backend
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-server
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  grafana-storage:
