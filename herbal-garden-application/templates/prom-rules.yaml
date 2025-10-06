@@ -1,0 +1,58 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: herbal-backend-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  groups:
+  - name: herbal-garden-backend-rules
+    rules:
+    - alert: BackendHighErrorRate
+      expr: |
+        sum(rate(http_requests_total{job="herbal-garden-backend-service", status=~"5xx"}[5m])) by (method, path) > 1
+      for: 1m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High rate of 5xx errors detected"
+        description: 'The backend is experiencing a high number of server errors (5xx) for requests to path {{ "{{ $labels.path }}" }}.'
+
+    - alert: BackendRequestLatencyTooHigh
+      expr: |
+        histogram_quantile(0.9, rate(http_request_duration_seconds_bucket{job="herbal-garden-backend-service"}[5m])) > 1
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Backend request latency is too high"
+        description: 'The 90th percentile of request durations is consistently above 1 second for requests to path {{ "{{ $labels.path }}" }}.'
+
+    - alert: HighCpuUsage
+      expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 4
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU usage on instance {{ "{{ $labels.instance }}" }}"
+        description: 'CPU usage is above 50% (current value: {{ "{{ $value }}" }}%)'
+    
+    - alert: PodRestart
+      expr: kube_pod_container_status_restarts_total > 2
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Pod restart detected in namespace {{ "{{ $labels.namespace }}" }}"
+        description: 'Pod {{ "{{ $labels.pod }}" }} in namespace {{ "{{ $labels.namespace }}" }} has restarted {{ "{{ $value }}" }} times'
+
+    - alert: TestEmailAlert
+      expr: vector(1)  # Always true
+      for: 0m
+      labels:
+        severity: warning
+        alertname: TestEmailAlert  # Matches your route
+      annotations:
+        summary: "Test email from Alertmanager"
+        description: "This is a test—ignore if you see it."
