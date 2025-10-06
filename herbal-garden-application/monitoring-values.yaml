@@ -1,0 +1,49 @@
+alertmanager:
+  enabled: true
+  config:
+    global:
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'dharshan122001@gmail.com'
+      smtp_auth_username: 'dharshan122001@gmail.com'
+      smtp_auth_identity: 'dharshan122001@gmail.com'
+      smtp_require_tls: true
+    route:
+      receiver: 'null'
+      group_by: ['alertname']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      routes:
+      - match:
+          alertname: BackendHighErrorRate
+        receiver: 'send-email'
+      - match:
+          alertname: BackendRequestLatencyTooHigh
+        receiver: 'send-email'
+      - match:
+          alertname: HighCpuUsage
+        receiver: 'send-email'
+      - match:
+          alertname: PodRestart
+        receiver: 'send-email'
+      - match:
+          alertname: TestEmailAlert
+        receiver: 'send-email'
+    receivers:
+    - name: 'null'
+    - name: 'send-email'
+      email_configs:
+      - to: 'dharshan122001@gmail.com'
+        send_resolved: false
+        auth_password_file: '/etc/alertmanager-secrets/gmail-pass'
+        headers:
+          subject: "[K8s Alert] {{ .GroupLabels.alertname }} - {{ .Status | toUpper }}"
+  alertmanagerSpec:
+    volumes:
+    - name: alertmanager-secrets
+      secret:
+        secretName: mail-pass
+    volumeMounts:
+    - name: alertmanager-secrets
+      mountPath: /etc/alertmanager-secrets
+      readOnly: true
