@@ -1,7 +1,7 @@
  pg_dump -U postgres -h 192.168.10.13 -p 5432 -d Plant > plant.sql
 Password: 
  
- try1
+ try11
  
  2000  sudo rm -rf /usr/local/google-cloud-sdk /opt/google-cloud-sdk ~/google-cloud-sdk
  2001  sudo rm -f /etc/apt/trusted.gpg.d/google-cloud.gpg
