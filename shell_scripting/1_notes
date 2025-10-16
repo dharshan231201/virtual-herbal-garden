@@ -1,0 +1,67 @@
+a=5
+b=5
+sum=$((a+b))  the double brackets are used only for arithmetic operations
+
+disk_size=$(df -h | grep '/dev/sda1' | awk '{print $5}' | cut -d '%' -f 1) her we use single brackets where we are not using arithmetic operations
+
+
+
+
+
+when you work on vi edtiors
+  when you open there will be no line numbers : for that you need to do this : esc + set nu  , so that it shows the number and when you do  :wq it will exit and it wont save the line numbers in the file
+
+  using more , less , cat 
+ 
+   more/head -2 editor.txt :  it gives the output of first 2 line
+   more +2 editor.txt : it displays all the data after line 2
+   tail -2 editor.txt : it displays last second line
+
+   #==========================================
+
+   deleting the older log files : find , mtime
+
+   find command is used to find the file in a directory
+   find . -name '*.log' : it will find all the files with extension .log in the current directory
+ it supports seaching the file by name , owner , modification time,date,size,etc
+
+   find . -mtime -2 : it will find all the files which are modified in last 2 days
+   +2 means more than 2 days
+   -2 means less than 2 days
+   2 exactly 2 days
+   find . -type f : it will find all the files in the current directory
+   find . -type d : it will find all the directories in the current directory
+   find . -type l : it will find all the symbolic links in the current directory
+
+   #=================================================================== sed ==========================
+   cat editor.txt == sed -n 'p' editor.txt 
+   sed -n '5,10p' editor.txt # to print line from 5 to 10
+   sed  '10d' editor.txt # to print without the 10th line
+   # if you want to actually delete from the file then make use of -i
+   sed -i '5,10d' editor.txt 
+   # befor deleting if you want to take the backup of the file then delete in the original file
+   sed -i.back '2d' editor.txt
+
+            #============= finding abd replacing the content ===========================#
+   sed 's/Line/line/' editor.txt   # it only takes the first occurance of each line
+   sed 's/Line/line/g' editor.txt   # it changes all the occurances 
+   # if you want to change only one line  which starts in the word games in the file by replacing  usr to user
+   sed '/games/s/usr/user/' editor.txt
+               
+            #================= insertion and deletion with sed commands ===================#
+  sed  '3a ------------' editor.txt #to insert the content after the 3rd line
+  sed  '4i ------------' editor.txt # to insert the content before the 4th line
+
+
+#=========================================================================================================================#
+
+
+    
+
+
+
+
+
+   
+
+

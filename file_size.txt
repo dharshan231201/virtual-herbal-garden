@@ -1,0 +1,10 @@
+575M	.
+331M	./client
+330M	./client/node_modules
+244M	./.git/objects/pack
+244M	./.git/objects
+244M	./.git
+243M	./.git/objects/pack/pack-f74154466d25f36ee9190cb439985ea9a38e6663.pack
+83M	./client/node_modules/react-icons
+77M	./client/node_modules/@firebase
+43M	./client/node_modules/firebase

@@ -6,6 +6,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List
 import os
 from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_client import Counter, Summary, Histogram, Gauge, Info
+import time
+import logging
 #from dotenv import load_dotenv
 
 from .database import get_db, engine
@@ -23,7 +26,14 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 app = FastAPI()
 # --- Prometheus Instrumentation ---
 # This line adds a /metrics endpoint and starts collecting metrics automatically.
-Instrumentator().instrument(app).expose(app)
+Instrumentator(
+    should_instrument_requests=False, # We'll handle this manually to get custom labels
+    excluded_handlers=['/metrics']
+).instrument(app).expose(app, should_gzip=True)
+
+async def simulate_async_task():
+    await asyncio.sleep(0.5) # Simulate work
+
 # --- End Prometheus Instrumentation ---
 CORS_ORIGINS_STR = os.getenv("CORS_ORIGINS")
 
@@ -38,10 +48,69 @@ app.add_middleware(
     allow_headers=["*"],
 )
 # --- End CORS Configuration ---
+#==================== Prometheus Metric definition ==========================#
 
+http_request_counter = Counter(
+    'http_requests_total',
+    'Total number of HTTP requests',
+    ['method', 'path', 'status_code']
+)
 
+http_request_duration_summary = Summary(
+    'http_request_duration_summary_seconds',
+    'Duration of HTTP requests',
+    ['method', 'path', 'status_code'],
+    percentiles=[0.1, 0.5, 1, 5, 10]
+)
 
+http_request_duration_histogram = Histogram(
+    'http_request_duration_seconds',
+    'Duration of HTTP requests in seconds',
+    ['method', 'path', 'status_code'],
+    buckets=[0.1, 0.5, 1, 5, 10]
+)
 
+http_node_gauge_example = Gauge(
+    'python_gauge_example',
+    'Example of a gauge tracking async task duration',
+    ['endpoint', 'status']
+)
+# --- End Prometheus Metrics Definitions ---
+
+#=================== apis for monitoring ====================================#
+@app.middleware("http")
+async def add_process_time_header(request, call_next):
+    # This is a custom middleware to capture metrics for all requests
+    start_time = time.time()
+    response = await call_next(request)
+    end_time = time.time() - start_time
+    status_code = response.status_code
+    method = request.method
+    path = request.url.path
+
+    # Increment custom counter with labels
+    http_request_counter.labels(
+        method=method, path=path, status_code=str(status_code)
+    ).inc()  # counter only the increases the number of the requests
+
+    # Observe the duration with custom labels
+    http_request_duration_histogram.labels(
+        method=method, path=path, status_code=str(status_code)
+    ).observe(end_time) # it observes the endtime for the histogram and same for the other too
+
+    # Observe the summary with custom labels
+    http_request_duration_summary.labels(
+        method=method, path=path, status_code=str(status_code)
+    ).observe(end_time)
+
+    return response
+
+@app.get('/example')
+async def example_route(request):
+    gauge_timer = http_node_gauge_example.labels(endpoint='example', status='in_progress').time()
+    await simulate_async_task()
+    gauge_timer.stop(status='completed')
+    return {'message': 'Async task completed'}
 
 #========================================================
 

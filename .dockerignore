@@ -1,0 +1,25 @@
+# Git
+.git
+.gitignore
+
+# Node.js
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__
+*.pyc
+
+# Temporary or local files
+logs/
+tmp/
+*.swp
+*~
+
+# Other specific files
+*.sql
+*.zip
+*.yaml
+*.yml

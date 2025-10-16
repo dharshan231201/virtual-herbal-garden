@@ -1,15 +1,16 @@
 version: "3.8"
 services:
   backend:
-    image: herbal-backend-image:1.0.1  # the image name of the conatainer
-    container_name: herbal-backend-container-1.0.1  # the name of the container
+    image: herbal-backend-image:1.0.2  # the image name of the conatainer
+    container_name: herbal-backend-container-1.0.2  # the name of the container
     build:
       context: ./server # based on the context of server directory 
       dockerfile: Dockerfile # the name of the docekrfile in the server directory
     environment: # environment variables that are being used in the project 
       - MY_NAME=Dharshan
       - GEMINI_API_KEY=AIzaSyDU2IRX8vjA5dtEfcuJ6IRAKuv4Ij1CBL4
-
+      - NEW_RELIC_LICENSE_KEY=1fd90bb1549178c838a4828659925d1eFFFFNRAL
+      - NEW_RELIC_APP_NAME=Herbal-Garden-Backend-App
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=Finiteloop123
       - POSTGRES_DB=Plant

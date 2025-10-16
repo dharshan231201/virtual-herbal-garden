@@ -1,0 +1,33 @@
+apiVersion: newrelic.com/v1alpha2
+kind: Instrumentation
+metadata:
+  name: newrelic-instrumentation
+  namespace: newrelic
+spec:
+  agent:
+    # Specifies the programming language of the application to be instrumented.
+    language: python
+    # This is the Docker image that contains the New Relic Python agent and a wrapper script.
+    image: newrelic/newrelic-python-init:latest
+    env:
+      # This environment variable sets the name of your application in the New Relic UI.
+      # We'll use the pod's label for a consistent naming convention.
+      - name: NEW_RELIC_APP_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.labels['app']
+
+  # Selects the namespace where the application pods are located.
+  namespaceLabelSelector:
+    matchExpressions:
+      - key: "kubernetes.io/metadata.name"
+        operator: "In"
+        values: ["default"]
+
+  # Selects the pods you want to automatically instrument.
+  # The 'values' field must match the pod label defined in your application's deployment.
+  podLabelSelector:
+    matchExpressions:
+      - key: "app"
+        operator: "In"
+        values: ["herbal-backend-pod"]

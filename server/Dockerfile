@@ -5,4 +5,5 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
 WORKDIR /app
 EXPOSE 8005
-CMD ["python", "-m", "uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8005", "--app-dir", "."]
+CMD ["newrelic-admin", "run-program", "uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8005", "--app-dir", "."]
+#CMD ["python", "-m", "uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8005", "--app-dir", "."]

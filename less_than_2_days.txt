@@ -1,0 +1,11 @@
+./file.txt
+./shell_scripting/1_notes
+./shell_scripting/log_deletion.sh
+./shell_scripting/editor.txt
+./shell_scripting/install_packages.sh
+./shell_scripting/find_large_filesize.sh
+./shell_scripting/disk_utilization.sh
+./file_size.txt
+./less_than_2_days.txt
+./more_than_2_days.txt
+./.git/FETCH_HEAD

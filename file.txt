@@ -1,0 +1,10 @@
+.
+./client
+./client/node_modules
+./.git/objects/pack
+./.git/objects
+./.git
+./.git/objects/pack/pack-f74154466d25f36ee9190cb439985ea9a38e6663.pack
+./client/node_modules/react-icons
+./client/node_modules/@firebase
+./client/node_modules/firebase

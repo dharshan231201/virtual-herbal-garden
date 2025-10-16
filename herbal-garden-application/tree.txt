@@ -1,0 +1,26 @@
+.
+├── charts
+├── Chart.yaml
+├── deploy.sh
+├── Linting
+├── newrelicvalues.yaml
+├── templates
+│   ├── backend-deployment.yaml
+│   ├── backend-service-monitor.yaml
+│   ├── backend-service.yaml
+│   ├── frontend-deployment.yaml
+│   ├── frontend-service.yaml
+│   ├── _helpers.tpl
+│   ├── herbal-configMap.yaml
+│   ├── herbal-secrets.yaml
+│   ├── hpa-backend.yaml
+│   ├── ingress-backend.yaml
+│   ├── ingress-prom.yaml
+│   ├── instrumentation.yaml
+│   ├── prom-alertmanager.yaml
+│   ├── prom-rules.yaml
+│   └── prom-secret-alertmanager.yaml
+├── tree.txt
+└── values.yaml
+
+2 directories, 21 files
