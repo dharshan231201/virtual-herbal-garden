@@ -1,0 +1,16 @@
+---
+- name: Devlops flow through ansible-galaxy roles
+  host: all
+  become: true
+  serial: 10% 
+  tasks:
+   - import_role:
+      name: check_health
+   - import_role:
+      name: local_file_operation
+      register: file_check
+   - import_role:
+      when: not file_check.stat.exists
+      name: install_webservers
+   - import_role:
+      name: install_devops_tools
