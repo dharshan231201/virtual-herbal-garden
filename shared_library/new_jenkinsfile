@@ -1,0 +1,132 @@
+// File: Jenkinsfile (in your application repository root)
+
+// Define parameters and environment for control flow and resource naming
+def K8S_PATH = 'virtual-herbal-garden/herbal-garden-application'
+
+pipeline {
+    
+    agent any 
+    
+    options {
+        timeout(time: 60, unit: 'MINUTES') 
+        disableConcurrentBuilds() 
+        skipDefaultCheckout true
+    }
+
+    parameters {
+        string(name: 'BRANCH_TO_SELECT', defaultValue: 'main', description: 'Git branch to build and deploy.')
+        choice(name: 'STAGE_TO_START_FROM', choices: ['CLONE', 'BUILD', 'DEPLOY'], description: 'Select the starting stage for a partial run.')
+        booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run unit and integration tests before deployment.')
+        string(name: 'DOCKER_HUB_CRED_ID', defaultValue: 'dockerhub-credentials', description: 'Jenkins ID of Docker Hub Username/Password credential.')
+    }
+
+    environment {
+        IMAGE_TAG = "${env.BUILD_NUMBER}" 
+        VALUES_FILE = "${K8S_PATH}/values.yaml"
+        FRONTEND_REPO = "dharshan9945/herbal-frontend-final-image"
+        BACKEND_REPO = "dharshan9945/herbal-backend-final-image"
+        K8S_DEPLOY_PATH = "${K8S_PATH}"
+        DEPLOYMENT_AGENT_LABEL = 'k8s-deployer'
+    }
+
+    stages {
+        
+        // 1. CLONE STAGE - Uses Shared Library function
+        stage('Clone Repository') {
+            when { expression { return params.STAGE_TO_START_FROM == 'CLONE' }  }
+            steps {
+                cloneRepo( // SL Call: vars/cloneRepo.groovy
+                    branch: params.BRANCH_TO_SELECT,
+                    repoUrl: 'https://github.com/dharshan231201/virtual-herbal-garden.git',
+                    credentialsId: 'Github-cred'
+                )
+            }
+        }
+        
+        // 2. BUILD, TEST, AND PUSH STAGE - Uses Shared Library functions
+        stage('Build, Test, and Push') {
+            when { expression { return params.STAGE_TO_START_FROM == 'BUILD' } }
+            
+            withCredentials([
+                usernamePassword(
+                    credentialsId: params.DOCKER_HUB_CRED_ID,
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PWD'
+                )
+            ]) {
+                parallel(failFast: true) {
+                    
+                    stage('Frontend Build & Push') {
+                        steps {
+                            buildAndPushImage( // SL Call: vars/buildAndPushImage.groovy
+                                dir: 'client', 
+                                repo: FRONTEND_REPO, 
+                                imageTag: IMAGE_TAG,
+                                dockerUser: DOCKER_USER,
+                                dockerPwd: DOCKER_PWD
+                            )
+                        }
+                    }
+                    
+                    stage('Backend Build & Push') {
+                        steps {
+                            buildAndPushImage( // SL Call: vars/buildAndPushImage.groovy
+                                dir: 'server', 
+                                repo: BACKEND_REPO, 
+                                imageTag: IMAGE_TAG,
+                                dockerUser: DOCKER_USER,
+                                dockerPwd: DOCKER_PWD
+                            )
+                        }
+                    }
+                    
+                    stage('Run Unit Tests') {
+                        when { expression { return params.RUN_TESTS } }
+                        options { timeout(time: 5, unit: 'MINUTES') } 
+                        steps { 
+                            runUnitTests('npm test --prefix client') // SL Call: vars/runUnitTests.groovy
+                        }
+                    }
+                } // end parallel
+                
+                post { always { sh 'docker logout' } }
+            } // end withCredentials
+        }
+        
+        // 3. K8S DEPLOYMENT STAGE - Uses Shared Library function
+        stage('Deploy to Kubernetes') {
+            when { expression { return params.STAGE_TO_START_FROM == 'DEPLOY' }
+            
+            agent { label "${DEPLOYMENT_AGENT_LABEL}" } 
+
+            steps {
+                stage('Update YAML (yq)') {
+                    steps {
+                        updateHelmTag( // SL Call: vars/updateHelmTag.groovy
+                            valuesFile: VALUES_FILE,
+                            frontendTag: IMAGE_TAG,
+                            backendTag: IMAGE_TAG
+                        )
+                    }
+                }
+                
+                stage('Helm Deploy') {
+                    unstable { 
+                        steps {
+                            sh "helm upgrade --install herbal-garden-app ${K8S_DEPLOY_PATH} --atomic --wait"
+                        }
+                    }
+                }
+            }
+        }
+    } // end stages
+
+    // Post-actions: Uses Shared Library function for all notifications
+    post {
+        always { deleteDir() }
+        success { notifyStatus('SUCCESS') } // SL Call: vars/notifyStatus.groovy
+        failure { notifyStatus('FAILURE') }
+        unstable { notifyStatus('UNSTABLE') }
+        aborted { notifyStatus('ABORTED') }
+    }
+}
