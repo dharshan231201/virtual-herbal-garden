@@ -1,0 +1,61 @@
+---
+  - hosts: all
+    become: true  # Ensures tasks run with root privileges
+    Tasks:
+       
+      - name: to ping all host nodes
+        serial: 10% # execute 10 servers at a time
+        ping:
+        remote_user: ansible # hostnode username
+        tags: Task1
+        
+      - name: Create a file
+        file:
+          path: /home/ansible/copied.txt
+          state: touch
+        tags: Task2
+        delegate_to: localhost
+ 
+      - name: Copy a file from controller
+        copy: #copy module.
+          src: /home/ansible/copying.txt  #copy from controller
+          dest: /home/ansible/copied.txt #paste it to managed node by creating file
+          owner: ansible #set owner as user ansible
+          group: ansible #set group as user ansible
+          mode: 777
+        tags: Task3
+        register: file_check
+        notify: Start HTTPD servers
+
+
+      - name: Install httpd   # Installing a package .
+        when: not file_check.stat.exists
+        yum:
+          name: httpd
+          state: latest
+        tags: Task4
+        retires: 5
+        delay: 10
+        ignore_errors: true
+
+
+      - name: Start the httpd service
+        service/systemd:
+          name: httpd
+          state: started
+        tags: Task5
+
+      - name: install_package
+        package/apt:
+         name: "{{ item }}" 
+         state: present
+         loop:
+          - git
+          - curl
+
+
+    handlers:
+     - name: Start Httpd Server
+       service:
+        name: "{{package_name}}"
+        state: started
