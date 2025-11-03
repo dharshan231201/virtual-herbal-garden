@@ -1,0 +1,5 @@
+---
+- name: Start Httpd Server
+  service:
+    name: "{{package_name}}"
+    state: started

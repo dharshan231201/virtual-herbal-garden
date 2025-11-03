@@ -1,0 +1,18 @@
+---
+- name: Install httpd   # Installing a package .
+  when: not file_check.stat.exists
+  yum:
+    name: httpd
+    state: latest
+    tags: Task4
+    retires: 5
+    delay: 10
+    ignore_errors: true
+
+
+- name: Start the httpd service
+  service/systemd:
+    name: httpd
+    state: started
+    enabled: yes
+    tags: Task5

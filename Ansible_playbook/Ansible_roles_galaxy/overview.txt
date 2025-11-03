@@ -1,0 +1,28 @@
+📐 Role-Based Project Structure
+You would typically run the following commands to create the basic directory structure:
+
+Bash
+
+ansible-galaxy init check_health
+ansible-galaxy init local_file_operations
+ansible-galaxy init install_webserver
+ansible-galaxy init install_devops_tools
+Your project directory would then look something like this:
+
+Ansible_roles_galaxy/
+├── roles/
+│   ├── check_health/
+│   │   └── tasks/
+│   │       └── main.yml  (Task 1: Ping)
+│   ├── local_file_operations/
+│   │   └── tasks/
+│   │       └── main.yml  (Tasks 2 & 3: Create, Copy, Register)
+│   ├── install_webserver/
+│   │   ├── tasks/
+│   │   │   └── main.yml  (Tasks 4 & 5: Install and Start HTTPD)
+│   │   └── handlers/
+│   │       └── main.yml  (Handler: Start HTTPD Server)
+│   └── install_devops_tools/
+│       └── tasks/
+│           └── main.yml  (Last Task: Install Git, Curl)
+└── site.yml  <-- This is your new main playbook

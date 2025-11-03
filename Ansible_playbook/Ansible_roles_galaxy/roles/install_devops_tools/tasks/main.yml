@@ -1,0 +1,8 @@
+---
+- name: install_package
+  package/apt:
+    name: "{{ item }}" 
+    state: present
+    loop:
+      - git
+      - curl

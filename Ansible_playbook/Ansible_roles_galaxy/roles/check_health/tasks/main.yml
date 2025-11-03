@@ -1,0 +1,6 @@
+---
+- name: to ping all host nodes
+  serial: 10% # execute 10 servers at a time
+  ping:
+   remote_user: ansible # hostnode username
+   tags: Task1

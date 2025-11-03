@@ -1,0 +1,19 @@
+---
+- name: Create a file
+  file:
+    path: /home/ansible/copied.txt
+    state: touch
+    tags: Task2
+    delegate_to: localhost
+    run_once: true
+ 
+- name: Copy a file from controller
+  copy: #copy module.
+    src: /home/ansible/copying.txt  #copy from controller
+    dest: /home/ansible/copied.txt #paste it to managed node by creating file
+    owner: ansible #set owner as user ansible
+    group: ansible #set group as user ansible
+    mode: 777
+    tags: Task3
+    register: file_check
+    notify: Start HTTPD server 
