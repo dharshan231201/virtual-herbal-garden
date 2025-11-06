@@ -1,0 +1,738 @@
+---
+# Source: herbal-garden-application/templates/herbal-secrets.yaml
+# herbal-garden-application/templates/herbal-secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: herbal-backend-secrets
+type: Opaque # Standard type for arbitrary user-defined data
+data:
+  # Base64 encoded values for sensitive environment variables
+  # Replace these with your actual base64 encoded values
+  GEMINI_API_KEY: QUl6YVN5RFUySVJYOHZqQTVkdEVmY3VKNklSQUt1djRJajFDQkw0
+  POSTGRES_USER: cG9zdGdyZXMuY2pqdWR3Y2FnZnF0cXhvcm9nZG0=
+  POSTGRES_PASSWORD: RmluaXRlbG9vcCQxMjM=
+  POSTGRES_DB: cG9zdGdyZXM=
+  POSTGRES_HOST: YXdzLTEtdXMtd2VzdC0xLnBvb2xlci5zdXBhYmFzZS5jb20=
+  POSTGRES_PORT: NjU0Mw==
+
+ #AIzaSyDU2IRX8vjA5dtEfcuJ6IRAKuv4Ij1CBL4 # base64 encode your actual key
+  # base64 encode "dharshan" postgres , echo -n 'postgres.cjjudwcagfqtqxorogdm' | base64
+   # base64 encode "dharshan" Finiteloop$123
+    #  echo -n 'postgres' | base64
+     #echo -n 'aws-1-us-west-1.pooler.supabase.com' | base64
+      #echo -n '6543' | base64
+---
+# Source: herbal-garden-application/templates/prom-secret-alertmanager.yaml
+# herbal-garden-application/templates/prom-secret-alertmanager.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mail-pass
+  namespace: monitoring # Must be in the same namespace as Alertmanager
+type: Opaque
+data:
+  gmail-pass: cXJvZCBzdXl4IGdrd2MgdWxzYw==
+
+  #cXJvZHN1eXhna3djdWxzYw==
+---
+# Source: herbal-garden-application/templates/herbal-configMap.yaml
+# herbal-garden-application/templates/herbal-configMap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: herbal-garden-config
+data:
+  frontend-VITE_API_BASE_URL: http://api.herbal-garden.com
+  backend-CORS_ORIGINS: "http://app.herbal-garden.com"
+---
+# Source: herbal-garden-application/templates/backend-service.yaml
+# herbal-garden-application/templates/backend-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: herbal-garden-backend-service
+  labels:
+    app: herbal-garden-backend-service-label
+spec:
+  type: ClusterIP
+  selector:
+    pod_label: herbal-backend-pod
+  ports:
+    - name: http
+      port: 8005
+      targetPort: http
+      protocol: TCP
+---
+# Source: herbal-garden-application/templates/frontend-service.yaml
+# herbal-garden-application/templates/frontend-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: herbal-garden-frontend-service
+  labels:
+    app: herbal-garden-frontend-service-label
+spec:
+  type: ClusterIP
+  selector:
+    pod_label: herbal-garden-frontend-pod
+  ports:
+    - port: 2001
+      targetPort: http
+      protocol: TCP
+---
+# Source: herbal-garden-application/templates/backend-deployment.yaml
+# herbal-garden-application/templates/backend-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: herbal-garden-backend-deployment # name of the deployment
+  labels:
+    app: herbal-garden-backend-deployment-label # label of the deployment
+spec:
+  #replicas: 1  # number of replicas
+  strategy: 
+   type: RollingUpdate
+  selector:
+    matchLabels:
+      pod_label: herbal-backend-pod
+  template:
+    metadata:
+      labels:
+        pod_label: herbal-backend-pod
+      annotations:
+        checksum/config: dc53c11da4bf1db2f15c4e83d73f5e861e729aabb9802e2d3f82b91f3ef45c41  #if there is any chnage in the configmap then this line is used to rollout and  restart
+        checksum/values: 74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b
+    spec:
+      # while using taints and toleration you have to create a taint to the node as  : kubectl taint node <node_name> key=value:effect
+      # tolerations: 
+      # - key: "application"           # Must match the taint key
+      #   operator: "Equal"          # Or "Exists" if you don't care about the value
+      #   value: "backend"           # Must match the taint value
+      #   effect: "NoSchedule"       # Must match the taint effect
+
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #       - matchExpressions:
+      #         - key: kubernetes.io/hostname # <--- this is used only to TARGETS THE SPECIFIC NODE 
+      #           operator: In
+      #           values:
+      #           - gke-herbal-final-default-pool-415681dd-0thx
+      #         - key: app-role  # labelling the node as kubectl label node <node_name> app-role=special-backend
+      #           operator: In # Operator 'In' means the value must be one of the listed values
+      #           values:
+      #           - special-backend # The value we set on the node
+      #   podAffinity:
+      #     preferredDuringSchedulingIgnoredDuringExecution:
+      #       - weight: 100
+      #         podAffinityTerm: 
+      #           labelSelector:
+      #             matchExpressions:
+      #               - key: app
+      #                 operator: In
+      #                 values:
+      #                   - herbal-garden-frontend-container
+      #           topologyKey: "kubernetes.io/hostname"
+      #   podAntiAffinity:
+      #       requiredDuringSchedulingIgnoredDuringExecution:
+      #         - labelSelector:
+      #             matchExpressions:
+      #               - key: app
+      #                 operator: In
+      #                 values:
+      #                   - herbal-backend-container
+      #           topologyKey: "kubernetes.io/hostname"
+      
+     
+      containers:
+        - name: herbal-backend-container
+          image: dharshan9945/herbal-backend-final-image:1.0.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8005 
+              name: http
+              protocol: TCP
+          env:
+            # Non-sensitive variables directly
+            # - name: MY_NAME
+            #   value: "Dharshan"
+            
+
+            - name: CORS_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: herbal-garden-config
+                  key: backend-CORS_ORIGINS
+
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: herbal-backend-secrets
+                  key: GEMINI_API_KEY
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: herbal-backend-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: herbal-backend-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: herbal-backend-secrets
+                  key: POSTGRES_DB
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: herbal-backend-secrets
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: herbal-backend-secrets
+                  key: POSTGRES_PORT
+
+          livenessProbe:
+            httpGet:
+              path: / # e.g., / or /liveness
+              port: 8005 # e.g., 8000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # === Readiness Probe ===
+          readinessProbe:
+            httpGet:
+              path: /health # This will be /health
+              port: 8005 # e.g., 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 50m
+              memory: 150Mi
+---
+# Source: herbal-garden-application/templates/frontend-deployment.yaml
+# herbal-garden-application/templates/frontend-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: herbal-garden-frontend-deployment
+  labels:
+    app: herbal-garden-frontend-deployment-label   # label of the deployment
+spec:
+  strategy:
+    type: RollingUpdate
+  replicas: 1
+  selector:
+    matchLabels:
+      pod_label: herbal-garden-frontend-pod      # label of the container inside the pod
+  template:
+    metadata:
+      labels:
+        pod_label: herbal-garden-frontend-pod
+      annotations: # <--- ADD THIS SECTION
+        checksum/config: dc53c11da4bf1db2f15c4e83d73f5e861e729aabb9802e2d3f82b91f3ef45c41  #if there is any chnage in the configmap then this line is used to rollout and  restart
+        checksum/values: 74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b # <--- ADD THIS LINE
+    spec:
+
+      # tolerations:
+      # - key: "application"           # Must match the taint key
+      #   operator: "Equal"          # Or "Exists" if you don't care about the value
+      #   value: "dummy"           # Must match the taint value
+      #   effect: "NoSchedule"       # Must match the taint effect
+      # affinity:
+      #   nodeAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #       nodeSelectorTerms:
+      #       - matchExpressions:
+      #         - key: kubernetes.io/hostname # <--- TARGETS THE SPECIFIC NODE
+      #           operator: In
+      #           values:
+      #           - gke-herbal-garden-gke-cl-default-pool-db875853-snz8
+              # - key: app-role
+                # operator: In # Operator 'In' means the value must be one of the listed values
+                # values:
+                # - special-frontend # The value we set on the node
+        # podAffinity:
+        #   preferredDuringSchedulingIgnoredDuringExecution:
+        #     - weight: 100
+        #       podAffinityTerm:
+        #         labelSelector:
+        #           matchExpressions:
+        #             - key: app
+        #               operator: In
+        #               values:
+        #                 - herbal-backend-container
+        #         topologyKey: "kubernetes.io/hostname"
+
+        # podAntiAffinity:
+        #     requiredDuringSchedulingIgnoredDuringExecution:
+        #       - labelSelector:
+        #           matchExpressions:
+        #             - key: app
+        #               operator: In
+        #               values:
+        #                 - herbal-garden-frontend-container
+        #         topologyKey: "kubernetes.io/hostname"
+          
+      containers:
+        - name: herbal-garden-frontend-container
+          image: dharshan9945/herbal-frontend-final-image:1.0.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          env:
+            # VITE_API_BASE_URL should point to the Kubernetes service name
+            - name: VITE_API_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: herbal-garden-config
+                  key: frontend-VITE_API_BASE_URL
+---
+# Source: herbal-garden-application/templates/hpa-backend.yaml
+# herbal-garden-application/templates/hpa-backend.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+ name: herbal-garden-backend-hpa
+ labels:
+    app: herbal-garden-backend-hpa-label
+spec:
+ minReplicas: 2
+ maxReplicas: 5
+ scaleTargetRef:
+  apiVersion: apps/v1
+  kind: Deployment
+  name: herbal-garden-backend-deployment
+ metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+       type: Utilization
+       averageUtilization: 40 #40% of 40m = 20mcpu when backend pod reaches more than 20m then replicas will be increased
+
+  - type: Resource
+    resource:
+      name: memory
+      target:
+       type: Utilization
+       averageUtilization: 60 #60% 0f 150 =90Mi , when backend pod reaches more than 90Mi then replicas will be increased
+     
+
+#kubectl apply -f metric-server.yaml
+#then check the metric server
+#kubectl get top pods
+# in order to genereate the load 
+#kubectl run loadgenerator -i --tty --rm --image=busybox /bin/sh -n <namespace>
+#inside the bash
+#while true; do wget -q0- http://<service_name>.<name_space>.svc.<service_name>.local; done
+#on the other terminal check whether the metric server is installed
+#kubectl apply -f metric-server.yaml
+#then check the metric server
+#kubectl get top pods
+---
+# Source: herbal-garden-application/templates/ingress-backend.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: release-name-loadbalancer-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.herbal-garden.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "herbal-garden-backend-service"
+                port:
+                  number: 8005
+    - host: app.herbal-garden.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "herbal-garden-frontend-service"
+                port:
+                  number: 2001
+---
+# Source: herbal-garden-application/templates/ingress-prom.yaml
+# herbal-garden-application/templates/ingress-prom.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus-stack-ingress
+  namespace: monitoring
+  annotations:
+    # No rewrite-target annotation needed!
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: prometheus.herbal-garden.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prometheus-stack-kube-prom-prometheus
+                port:
+                  number: 9090
+    - host: grafana.herbal-garden.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prometheus-stack-grafana
+                port:
+                  number: 80
+    - host: alert-manager.herbal-garden.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prometheus-stack-kube-prom-alertmanager
+                port:
+                  number: 9093
+---
+# Source: herbal-garden-application/templates/ingress-backend.yaml
+# herbal-garden-application/templates/ingress-backend.yaml
+---
+# Source: herbal-garden-application/templates/prom-rules.yaml
+#herbal-garden-application/templates/prom-rules.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: herbal-backend-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  groups:
+  - name: herbal-garden-backend-rules
+    rules:
+    - alert: BackendHighErrorRate
+      expr: |
+        sum(rate(http_requests_total{job="herbal-garden-backend-service", status=~"5xx"}[5m])) by (method, path) > 1
+      for: 1m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High rate of 5xx errors detected"
+        description: 'The backend is experiencing a high number of server errors (5xx) for requests to path {{ $labels.path }}.'
+
+    - alert: BackendRequestLatencyTooHigh
+      expr: |
+        histogram_quantile(0.9, rate(http_request_duration_seconds_bucket{job="herbal-garden-backend-service"}[5m])) > 1
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Backend request latency is too high"
+        description: 'The 90th percentile of request durations is consistently above 1 second for requests to path {{ $labels.path }}.'
+
+    - alert: HighCpuUsage
+      expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 4
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU usage on instance {{ $labels.instance }}"
+        description: 'CPU usage is above 50% (current value: {{ $value }}%)'
+    
+    - alert: PodRestart
+      expr: kube_pod_container_status_restarts_total > 2
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Pod restart detected in namespace {{ $labels.namespace }}"
+        description: 'Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted {{ $value }} times'
+---
+# Source: herbal-garden-application/templates/backend-service-monitor.yaml
+# herbal-garden-application/templates/backend-service-monitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: herbal-garden-backend-monitor
+  namespace: monitoring
+  labels:
+    # This label is crucial for the Prometheus Operator to find this ServiceMonitor.
+    # It must match the release name of your Helm chart.
+    release: prometheus-stack
+spec:
+  # The ServiceMonitor will only scrape services in these namespaces.
+  namespaceSelector:
+    matchNames:
+    - default # Or the namespace where your backend is deployed
+  # This selector tells the ServiceMonitor which service to target.
+  # It should match the labels on your `herbal-garden-backend-service`.
+  selector:
+    matchLabels:
+      app: herbal-garden-backend-service-label                   
+  endpoints:
+  - port: http # The port name must match the name in your Service manifest.
+    path: /metrics
+    interval: 15s
+
+
+    #chart.yamlapiVersion: v2
+name: herbal-garden-application
+description: A Helm chart for Kubernetes
+
+# A chart can be either an 'application' or a 'library' chart.
+#
+# Application charts are a collection of templates that can be packaged into versioned archives
+# to be deployed.
+#
+# Library charts provide useful utilities or functions for the chart developer. They're included as
+# a dependency of application charts to inject those utilities and functions into the rendering
+# pipeline. Library charts do not define any templates and therefore cannot be deployed.
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.1.0
+
+# This is the version number of the application being deployed. This version number should be
+# incremented each time you make changes to the application. Versions are not expected to
+# follow Semantic Versioning. They should reflect the version the application is using.
+# It is recommended to use it with quotes.
+appVersion: "1.16.0"
+
+
+
+#monitoring.yamlalertmanager:
+  enabled: true
+  config:
+    global:
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'dharshan122001@gmail.com'
+      smtp_auth_username: 'dharshan122001@gmail.com'
+      smtp_auth_identity: 'dharshan122001@gmail.com'
+      smtp_require_tls: true
+    route:
+      receiver: 'null'
+      group_by: ['alertname']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      routes:
+      - match:
+          alertname: BackendHighErrorRate
+        receiver: 'send-email'
+      - match:
+          alertname: BackendRequestLatencyTooHigh
+        receiver: 'send-email'
+      - match:
+          alertname: HighCpuUsage
+        receiver: 'send-email'
+      - match:
+          alertname: PodRestart
+        receiver: 'send-email'
+      - match:
+          alertname: TestEmailAlert
+        receiver: 'send-email'
+    receivers:
+    - name: 'null'
+    - name: 'send-email'
+      email_configs:
+      - to: 'dharshan122001@gmail.com'
+        send_resolved: true
+        auth_password_file: '/etc/alertmanager-secrets/gmail-pass'
+        headers:
+          subject: "[K8s Alert] {{ .GroupLabels.alertname }} - {{ .Status | toUpper }}"
+  alertmanagerSpec:
+    volumes:
+    - name: alertmanager-secrets
+      secret:
+        secretName: mail-pass
+    volumeMounts:
+    - name: alertmanager-secrets
+      mountPath: /etc/alertmanager-secrets
+      readOnly: true
+#values.yaml
+# herbal-garden-application/values.yaml
+
+replicaCount: 1 # Recommend at least 2 for backend for high availability and zero-downtime updates
+
+frontend:
+  deployment_name: herbal-garden-frontend-deployment
+  deployment_label: herbal-garden-frontend-deployment-label
+  pod_label: herbal-garden-frontend-pod
+  container_name: herbal-garden-frontend-container
+  service_name: herbal-garden-frontend-service
+  service_label: herbal-garden-frontend-service-label
+
+  image:
+    repository: dharshan9945/herbal-frontend-final-image
+    pullPolicy: IfNotPresent
+    tag: 1.0.1
+  service:
+    type: ClusterIP # Exposes your frontend externally
+    port: 2001 # External port users connect to
+    targetPort: 80 # Container port where your frontend serves (e.g., Nginx, React dev server)
+
+  resources:
+    requests:
+      cpu: "50m" # The scheduler will only place this pod on a node that has at least 50m of CPU available
+      memory: "150Mi" # The scheduler will only place this pod on a node that has at least 150Mi of memory available.
+    limits:
+      cpu: "500m" # If the pod tries to use more than 500m of CPU, it will be throttled and its performance will slow down, but the pod will not be killed.
+      memory: "512Mi" # If the pod tries to use more than 512Mi, it will be immediately terminated by Kubernetes with an "OOMKilled" (Out Of Memory) status.
+
+backend:
+  deployment_name: herbal-garden-backend-deployment
+  deployment_label: herbal-garden-backend-deployment-label
+  pod_label: herbal-backend-pod
+  container_name: herbal-backend-container
+  service_name: herbal-garden-backend-service
+  service_label: herbal-garden-backend-service-label
+
+  image:
+    repository: dharshan9945/herbal-backend-final-image
+    tag: 1.0.1
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP # Internal service, not directly exposed outside the cluster
+    port: 8005 # Service port within the cluster
+    targetPort: 8005 # Container port where your FastAPI app listens (Crucial: Must match your app's Uvicorn port!)
+  env:
+    # Environment variables from ConfigMaps (non-sensitive)
+    CORS_ORIGINS: "http://app.herbal-garden.com" #http://35.238.221.87:2001,http://localhost:2001,http://127.0.0.1:2001 # Adjust based on your frontend's actual deployed URLs
+
+  # --- Secret Environment Variables Configuration ---
+  # This map defines which environment variables your application needs
+  # and which keys from which Kubernetes Secrets they should pull their values from.
+  envSecrets:
+    # The key here "herbal-backend-secrets" must EXACTLY match the 'metadata.name' of your Kubernetes Secret
+    herbal-backend-secrets:
+      # Left side (key): The environment variable name inside your container (e.g., POSTGRES_USER)
+      # Right side (value): The key name within the Kubernetes Secret (e.g., POSTGRES_USER)
+      # Note: They can be different (e.g., MY_DB_USER: POSTGRES_USER_IN_SECRET)
+      GEMINI_API_KEY: GEMINI_API_KEY
+      POSTGRES_USER: POSTGRES_USER
+      POSTGRES_PASSWORD: POSTGRES_PASSWORD
+      POSTGRES_DB: POSTGRES_DB
+      POSTGRES_HOST: POSTGRES_HOST
+      POSTGRES_PORT: POSTGRES_PORT
+
+  # --- Probe Configurations ---
+  # Define the parameters for Liveness, Readiness, and (optionally) Startup probes.
+  probes:
+    liveness:
+      enabled: true
+      path: / # Use a very light-weight endpoint, like / or a dedicated /liveness
+      port: 8005 # Must match backend.service.targetPort
+      initialDelaySeconds: 30 # Give the app ample time to fully initialize before first liveness check
+      periodSeconds: 20 # Check every 20 seconds
+      timeoutSeconds: 5 # Allow 5 seconds for a response
+      failureThreshold: 3 # Restart container after 3 consecutive failures
+
+    readiness:
+      enabled: true
+      path: /health # Your comprehensive health check (checks DB connectivity)
+      port: 8005 # Must match backend.service.targetPort
+      initialDelaySeconds: 15 # Can be shorter than liveness, as we want to know readiness sooner
+      periodSeconds: 10 # Check every 10 seconds (more frequently for readiness)
+      timeoutSeconds: 5 # Allow 5 seconds for a response
+      failureThreshold: 3 # Mark pod as Not Ready after 3 consecutive failures
+
+  resources:
+    requests:
+      cpu: "50m" # The scheduler will only place this pod on a node that has at least 50m of CPU available
+      memory: "150Mi" # The scheduler will only place this pod on a node that has at least 150Mi of memory available.
+    limits:
+      cpu: "500m" # If the pod tries to use more than 500m of CPU, it will be throttled and its performance will slow down, but the pod will not be killed.
+      memory: "512Mi" # If the pod tries to use more than 512Mi, it will be immediately terminated by Kubernetes with an "OOMKilled" (Out Of Memory) status.
+
+  hpa:
+    hpa_name: herbal-garden-backend-hpa
+    hpa_label: herbal-garden-backend-hpa-label
+    minReplicas: 2
+    maxReplicas: 5
+    cpu: 40
+    memory: 60
+#========================================================================================
+
+# limitRange:
+#   enabled: true
+#   name: herbal-garden-limit-range
+#   namespace: default
+#   pod:
+#     # Max Pod resources. Adjust this to a safe amount well below the node's allocatable limits.
+#     maxCpu: "900m"
+#     maxMemory: "2500Mi" # 2.5Gi, which is a bit less than the 2.8Gi allocatable
+#     # Min Pod resources. Should be slightly above the individual container min.
+#     minCpu: "500m"
+#     minMemory: "1.2Gi"
+#     # Default resources for a pod (if not specified). Keep this low but functional.
+#   container:
+#     # Max Container resources. This is the hard limit for a single container.
+#     maxCpu: "500m" # Keep this at half the node's allocatable CPU or less to allow multiple containers.
+#     maxMemory: "1Gi"
+#     # Min Container resources. Make sure your app works with this minimum.
+#     minCpu: "250m"
+#     minMemory: "512Mi"
+#     # Default resources for containers (if not specified).
+#     defaultCpu: "250m"
+#     defaultMemory: "512Mi"
+#     defaultRequestCpu: "250m"
+#     defaultRequestMemory: "512Mi"
+
+# ################################################################################
+# # ResourceQuota Configuration
+# ################################################################################
+# resourceQuota:
+#   enabled: true
+#   name: herbal-garden-quota
+#   namespace: default
+#   limits:
+#     # Set the total CPU and memory limits for all pods in the namespace.
+#     # A safe value is slightly below the node's total allocatable capacity.
+#     cpu: "900m" # Just under the 940m allocatable.
+#     memory: "2.5Gi" # Just under the 2.8Gi allocatable.
+#     # ... other limits and requests for storage, etc.
+#   requests:
+#     cpu: "500m" # Total CPU requests for all pods.
+#     memory: "1.5Gi" # Total memory requests for all pods.
+#   counts:
+#     pods: "10" # Limit the number of pods to a reasonable number.
+#     configmaps: "5"
+#     secrets: "6"
+#     persistentvolumeclaims: "10"
+#     deployments: "2" # Since you have a frontend and backend deployment.
+
+
+
+
+

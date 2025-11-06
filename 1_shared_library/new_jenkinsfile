@@ -98,7 +98,7 @@ pipeline {
             when { expression { return params.STAGE_TO_START_FROM == 'DEPLOY' }
             
             agent { label "${DEPLOYMENT_AGENT_LABEL}" } 
-
+             // agent { docker { image 'image_name '} } if you want the agent to be the docker image adn want to work inside that image 
             steps {
                 stage('Update YAML (yq)') {
                     steps {

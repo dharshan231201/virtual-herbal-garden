@@ -1,3 +1,4 @@
+#herbal-garden-application/templates/prom-rules.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -46,13 +47,3 @@ spec:
       annotations:
         summary: "Pod restart detected in namespace {{ "{{ $labels.namespace }}" }}"
         description: 'Pod {{ "{{ $labels.pod }}" }} in namespace {{ "{{ $labels.namespace }}" }} has restarted {{ "{{ $value }}" }} times'
-
-    - alert: TestEmailAlert
-      expr: vector(1)  # Always true
-      for: 0m
-      labels:
-        severity: warning
-        alertname: TestEmailAlert  # Matches your route
-      annotations:
-        summary: "Test email from Alertmanager"
-        description: "This is a test—ignore if you see it."

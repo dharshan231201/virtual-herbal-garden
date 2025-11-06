@@ -34,7 +34,7 @@ alertmanager:
     - name: 'send-email'
       email_configs:
       - to: 'dharshan122001@gmail.com'
-        send_resolved: false
+        send_resolved: true
         auth_password_file: '/etc/alertmanager-secrets/gmail-pass'
         headers:
           subject: "[K8s Alert] {{ .GroupLabels.alertname }} - {{ .Status | toUpper }}"

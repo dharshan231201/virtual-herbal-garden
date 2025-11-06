@@ -30,7 +30,6 @@ spec:
                 name: prometheus-stack-grafana
                 port:
                   number: 80
-
     - host: alert-manager.herbal-garden.com
       http:
         paths:
@@ -40,4 +39,4 @@ spec:
               service:
                 name: prometheus-stack-kube-prom-alertmanager
                 port:
-                  number: 9093 
+                  number: 9093

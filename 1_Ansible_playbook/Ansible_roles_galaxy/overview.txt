@@ -26,3 +26,5 @@ Ansible_roles_galaxy/
 │       └── tasks/
 │           └── main.yml  (Last Task: Install Git, Curl)
 └── site.yml  <-- This is your new main playbook
+
+ansible-playbook -i inventory.ini --ask-pass final_playbook.yml --tags install_devops_tools --limit webservers
