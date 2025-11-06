@@ -1,0 +1,110 @@
+
+lets say you have written the docker file in this path  /app/virtual-herbal-garden/docker/
+# ------------------------------------
+# Define Build Arguments (ARG) - Use explicit IDs and generic names
+# ------------------------------------
+ARG APP_VERSION=1.0.0
+ARG HTTP_PORT=3000
+ARG APP_USER=appuser    # Generic, lowercase user name
+ARG APP_GROUP=appgroup  # Generic, lowercase group name
+ARG APP_UID=10001       # Explicit, high UID for security/k8s
+
+# ------------------------------------
+# Stage 1: Builder Stage (Install Dependencies)
+# ------------------------------------
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . . # <--- Must copy source files here too!
+
+# ------------------------------------
+# Stage 2: Final Runtime Stage (Slim and Secure)
+# ------------------------------------
+FROM node:20-slim AS final
+
+# Promote ARG to ENV for application access
+ENV PORT=${HTTP_PORT}
+ENV NODE_ENV=production
+
+# ------------------------------------
+# Security: Create the Non-Root User Explicitly
+# CONCEPTS: Explicit UID/GID
+# ------------------------------------
+RUN set -eux; \
+    addgroup -g ${APP_UID} ${APP_GROUP}; \
+    adduser -D -u ${APP_UID} -G ${APP_GROUP} ${APP_USER}; \
+    mkdir -p /app; \
+    chown -R ${APP_USER}:${APP_GROUP} /app 
+
+WORKDIR /app
+USER ${APP_USER}
+
+# Copy artifacts from the builder stage with correct ownership
+# Note the fix for the typo 'builder'
+COPY --from=builder --chown=${APP_USER}:${APP_GROUP} /app/node_modules ./node_modules
+COPY --from=builder --chown=${APP_USER}:${APP_GROUP} /app/server.js .
+
+EXPOSE ${PORT} # Using the ENV variable
+
+# ENTRYPOINT & CMD for predictable execution
+ENTRYPOINT ["node"]
+CMD ["server.js"]
+
+
+
+
+
+
+#================================= Docker compose =============================#
+/app/virtual-herbal-garden/
+├── docker/
+│   └── Dockerfile.nodejs (Your Dockerfile)
+├── package.json
+└── server.js
+
+
+
+version: '3.8'
+services:
+    frontend:
+        build:
+            context: <path of the dockerfile> from the pwd
+            dockerfile: dockerfile_name
+            target: final
+            args:
+                app_version: 'x.x.x'  # this is override the argument that is specified in the dockerfile
+            
+            image: node-js_app:${app_version:-latest}
+            ports:
+                - 3000:80
+            links:
+                - <service_name_if_present>:<name_the_link>
+
+            volumes:
+                - .:/app <what ever the changes that is done win local will reflect in the container app directory 
+                - postgres_data: /app/database           
+            networks:
+                - app-net
+networks:
+    app-net:
+        driver: bridge
+volumes:
+    postgres_data:
+        driver: local # volume is the created
+    
+
+later this :
+    docker compose up --build  # it creates an image and runs the container
+ if you want to build first and then run the container
+    docker build -t .
+    docker run -d --name <name_of_the_container> image_name
+
+once the container is running successfully
+
+tag the image : docker tag image_name docker_username/image_name:version
+push the image : docker push docker_username/<image_name>:verison
+
+
+
+     #--build-arg APP_VERSION=1.2.5-
