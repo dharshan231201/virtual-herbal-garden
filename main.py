@@ -8,7 +8,7 @@ import os
 from dotenv import load_dotenv
 
 from .database import get_db, engine
-from . import schemas
+from .server import schemas
 
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold

@@ -1,5 +1,5 @@
+// /client/src/components/Footer.jsx
 import React from 'react';
-
 function Footer() {
     return (
         <footer className="bg-gray-800 text-white p-6 mt-8 shadow-inner">

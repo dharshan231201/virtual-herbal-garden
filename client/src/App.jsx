@@ -1,61 +1,73 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import axios from 'axios';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebase'; // Assuming your firebase config is here
 
-// Import your components
+// Import components
 import Navbar from './components/Navbar';
 import PlantList from './components/PlantList';
 import PlantDetail from './components/PlantDetail';
 import AIChatAssistant from './components/AIChatAssistant';
 import IdentifyPlant from './components/IdentifyPlant';
-import Home from './components/Home'; // NEW IMPORT: Home component
+import Home from './components/Home';
+import AuthPage from './components/AuthPage'; 
+import ResetPassword from './components/ResetPassword';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-//const API_BASE_URL = 'http://localhost:8005';
-//const API_BASE_URL = 'http://herbal-backend-container:8005';
-//const API_BASE_URL = 'http://192.168.10.13:8005'; // THIS MUST BE YOUR SERVER'S ACTUAL IP AND PORT 8005
 
 function App() {
-    const [user, setUser] = useState(null);
+    // Initialize user from localStorage to persist login across refreshes
+    const [user, setUser] = useState(() => {
+        const savedUser = localStorage.getItem('user');
+        return savedUser ? JSON.parse(savedUser) : null;
+    });
+    
     const [userBookmarks, setUserBookmarks] = useState(new Set());
-    const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false); // State for Navbar filter
+    const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
 
-    // Auth state listener
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setUser(currentUser);
-            if (currentUser) {
-                // Fetch bookmarks immediately after user logs in or state changes
-                await fetchUserBookmarks(currentUser);
-            } else {
-                setUserBookmarks(new Set()); // Clear bookmarks if logged out
-            }
-        });
-        return () => unsubscribe();
-    }, []);
-
-    // Function to fetch user bookmarks
+    // Function to fetch user bookmarks from your backend
     const fetchUserBookmarks = useCallback(async (currentUser) => {
-        if (!currentUser) {
+        const token = localStorage.getItem('token');
+        if (!currentUser || !token) {
             setUserBookmarks(new Set());
             return;
         }
+
         try {
-            const idToken = await currentUser.getIdToken();
-            const response = await axios.get(`${API_BASE_URL}/bookmarks/user/${currentUser.uid}`, {
-                headers: { Authorization: `Bearer ${idToken}` }
+            // Updated endpoint to use email as per your FastAPI refactor
+            const response = await axios.get(`${API_BASE_URL}/bookmarks/user/${currentUser.email}`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
             const bookmarks = new Set(response.data.map(bookmark => bookmark.plant_id));
             setUserBookmarks(bookmarks);
-            console.log("User bookmarks fetched:", bookmarks);
         } catch (error) {
-            console.error("Error fetching bookmarks:", error.response ? error.response.data : error.message);
-            setUserBookmarks(new Set()); // Clear bookmarks on error
+            console.error("Error fetching bookmarks:", error.message);
+            setUserBookmarks(new Set());
         }
-    }, [API_BASE_URL]);
+    }, []);
 
-    // Callback for when a bookmark is toggled (add/remove)
+    // Effect to handle initial load and syncing bookmarks when user changes
+    useEffect(() => {
+        if (user) {
+            fetchUserBookmarks(user);
+        } else {
+            setUserBookmarks(new Set());
+        }
+    }, [user, fetchUserBookmarks]);
+
+    // This function can be called by AuthPage.jsx upon successful login
+    const handleLogin = (userData, token) => {
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+        setUserBookmarks(new Set());
+    };
+
     const handleBookmarkToggled = useCallback((plantId, wasBookmarked) => {
         setUserBookmarks(prevBookmarks => {
             const newBookmarks = new Set(prevBookmarks);
@@ -64,7 +76,6 @@ function App() {
             } else {
                 newBookmarks.add(plantId);
             }
-            console.log("Updated bookmarks locally:", newBookmarks);
             return newBookmarks;
         });
     }, []);
@@ -74,20 +85,20 @@ function App() {
             <div className="min-h-screen flex flex-col bg-gray-50">
                 <Navbar
                     user={user}
+                    onLogout={handleLogout}
                     showBookmarkedOnly={showBookmarkedOnly}
                     setShowBookmarkedOnly={setShowBookmarkedOnly}
                 />
                 <main className="flex-grow container mx-auto px-4 py-8">
                     <Routes>
-                        <Route path="/" element={<Home />} /> {/* Home component for root path */}
+                        <Route path="/" element={<Home />} />
                         <Route
-                            path="/plants" // PlantList now at /plants
+                            path="/plants"
                             element={
                                 <PlantList
-                                    user={user}
                                     userBookmarks={userBookmarks}
                                     onBookmarkToggled={handleBookmarkToggled}
-                                    showBookmarkedOnly={showBookmarkedOnly} // Pass the state to PlantList
+                                    showBookmarkedOnly={showBookmarkedOnly}
                                 />
                             }
                         />
@@ -95,7 +106,6 @@ function App() {
                             path="/plants/:plantId"
                             element={
                                 <PlantDetail
-                                    user={user}
                                     userBookmarks={userBookmarks}
                                     onBookmarkToggled={handleBookmarkToggled}
                                 />
@@ -103,11 +113,12 @@ function App() {
                         />
                         <Route path="/ai-assistant" element={<AIChatAssistant user={user} />} />
                         <Route path="/identify" element={<IdentifyPlant />} />
-                        {/* Add other routes here if necessary */}
+                        <Route path="/login" element={<AuthPage onLogin={handleLogin} />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
                     </Routes>
                 </main>
                 <footer className="bg-gray-800 text-white text-center p-4 mt-8">
-                    <p>&copy; 2024 Virtual Herbal Garden. All rights reserved.</p>
+                    <p>&copy; 2025 Virtual Herbal Garden. All rights reserved.</p>
                 </footer>
             </div>
         </Router>

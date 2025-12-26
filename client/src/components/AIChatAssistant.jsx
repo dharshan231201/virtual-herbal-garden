@@ -1,3 +1,4 @@
+// /client/src/components/AIChatAssistant.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
