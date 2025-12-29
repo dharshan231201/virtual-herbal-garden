@@ -4,7 +4,8 @@ def setup_cors(app):
     origins = [
         "http://localhost:2001",
         "http://127.0.0.1:2001",
-        "http://192.168.10.13:2001"
+        "http://192.168.10.13:2001",
+        "https://virtual-herbal-garden-r1uw.onrender.com:2001"
 
     ]
 
