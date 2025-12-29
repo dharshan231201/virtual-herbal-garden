@@ -1,13 +1,11 @@
+import os
 from fastapi.middleware.cors import CORSMiddleware
 
 def setup_cors(app):
-    origins = [
-        "http://localhost:2001",
-        "http://127.0.0.1:2001",
-        "http://192.168.10.13:2001",
-        "https://virtual-herbal-garden-r1uw.onrender.com:2001"
+    cors_origins = os.getenv("CORS_ORIGINS", "")
 
-    ]
+    origins = [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
+
 
     app.add_middleware(
         CORSMiddleware,
