@@ -5,9 +5,9 @@ from sqlalchemy import text
 from typing import List, Optional
 
 # Absolute imports from your monorepo structure
-from server.common.database import get_db
-from server.common import schemas
-from server.common.utils import setup_cors
+from common.database import get_db
+from common import schemas
+from common.utils import setup_cors
 
 from pathlib import Path
 from dotenv import load_dotenv

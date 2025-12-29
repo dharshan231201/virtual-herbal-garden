@@ -7,8 +7,8 @@ import google.generativeai as genai
 from google.generativeai.types import HarmCategory,HarmBlockThreshold
 
 # Shared imports
-from server.common import schemas
-from server.common.utils import setup_cors  # Import the utility
+from common import schemas
+from common.utils import setup_cors  # Import the utility
 
 from pathlib import Path
 from dotenv import load_dotenv

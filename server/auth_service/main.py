@@ -10,9 +10,9 @@ from dotenv import load_dotenv
 from jose import jwt
 
 # Absolute imports from your monorepo structure
-from server.common.database import get_db
-from server.common import schemas
-from server.common.utils import setup_cors
+from common.database import get_db
+from common import schemas
+from common.utils import setup_cors
 
 # Load environment variables
 load_dotenv()
@@ -196,7 +196,13 @@ async def reset_password(data: schemas.ResetCodeVerify, db: Session = Depends(ge
                {"p": new_hashed, "e": data.email})
     
     # Update status of the reset code
-    db.execute(text("UPDATE public.resetcode SET status = 'used' WHERE id = :id"), {"id": record['id']})
+    db.execute(text("UPDATE public." \
+    "" \
+    "" \
+    "" \
+    "" \
+    "" \
+    "resetcode SET status = 'used' WHERE id = :id"), {"id": record['id']})
     db.commit()
     
     return {"message": "Password updated successfully"}
