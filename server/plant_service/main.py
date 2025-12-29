@@ -26,7 +26,7 @@ load_dotenv(dotenv_path=env_path)
 async def health_check():
     return {"status": "Plant Service is running"}
 
-@app.get("/plants/", response_model=List[schemas.Plant])
+@app.get("/plants", response_model=List[schemas.Plant])
 def list_plants(
     search_query: Optional[str] = Query(None, description="Search by name, description, or uses"), 
     db: Session = Depends(get_db)
