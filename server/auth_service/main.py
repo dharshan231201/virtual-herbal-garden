@@ -62,14 +62,14 @@ async def google_sync(user_data: dict, db: Session = Depends(get_db)):
     """Syncs Google User with Postgres using email as primary key"""
     # Look up using existing columns: email, first_name, last_name
     user = db.execute(
-        text("SELECT email, first_name, last_name FROM users WHERE email = :email"), 
+        text("SELECT email, first_name, last_name FROM public.users WHERE email = :email"), 
         {"email": user_data['email']}
     ).mappings().first()
     
     if not user:
         # Insert using your specific columns (no 'id' or 'username')
         user = db.execute(text("""
-            INSERT INTO users (email, first_name, hashed_password) 
+            INSERT INTO public.users (email, first_name, hashed_password) 
             VALUES (:email, :fn, 'GOOGLE_USER') 
             RETURNING email, first_name, last_name
         """), {
@@ -92,13 +92,13 @@ async def google_sync(user_data: dict, db: Session = Depends(get_db)):
 @app.post("/auth/register")
 async def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     """Manual User Registration using hashed_password column"""
-    existing = db.execute(text("SELECT 1 FROM users WHERE email = :e"), {"e": user_data.email}).first()
+    existing = db.execute(text("SELECT 1 FROM public.users WHERE email = :e"), {"e": user_data.email}).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already exists")
     
     hashed = hash_password(user_data.password)
     result = db.execute(text("""
-        INSERT INTO users (email, hashed_password, first_name, last_name)
+        INSERT INTO public.users (email, hashed_password, first_name, last_name)
         VALUES (:email, :password, :fn, :ln) 
         RETURNING email, first_name, last_name
     """), {
@@ -134,7 +134,7 @@ def login(data: schemas.UserCreate, db: Session = Depends(get_db)):
     """Manual Login and JWT Generation using email and hashed_password"""
     # Fetch user data using mapped names
     user = db.execute(
-        text("SELECT email, first_name, hashed_password FROM users WHERE email = :email"), 
+        text("SELECT email, first_name, hashed_password FROM public.users WHERE email = :email"), 
         {"email": data.email}
     ).mappings().first()
     
@@ -155,14 +155,14 @@ def login(data: schemas.UserCreate, db: Session = Depends(get_db)):
 @app.post("/auth/forgot-password")
 async def forgot_password(data: schemas.ResetCodeCreate, db: Session = Depends(get_db)):
     """Generates a UUID reset code and emails it"""
-    user = db.execute(text("SELECT email FROM users WHERE email = :email"), {"email": data.email}).first()
+    user = db.execute(text("SELECT email FROM public.users WHERE email = :email"), {"email": data.email}).first()
     if not user:
         return {"message": "If an account exists, an email has been sent."}
 
     reset_id = str(uuid.uuid4())
     # Note: Column names match: id, email, resetId, status, created_at, expired_in
     db.execute(text("""
-        INSERT INTO resetcode (email, "resetId", status, created_at, expired_in)
+        INSERT INTO public.resetcode (email, "resetId", status, created_at, expired_in)
         VALUES (:email, :rid, 'pending', NOW(), INTERVAL '1 hour')
     """), {"email": data.email, "rid": reset_id})
     db.commit()
@@ -184,7 +184,7 @@ async def reset_password(data: schemas.ResetCodeVerify, db: Session = Depends(ge
     """Verifies the reset code and updates hashed_password"""
     # Use mappings() to safely access 'email' and 'id'
     record = db.execute(text("""
-        SELECT id, email FROM resetcode WHERE email = :email AND "resetId" = :rid 
+        SELECT id, email FROM public.resetcode WHERE email = :email AND "resetId" = :rid 
         AND status = 'pending' AND (created_at + expired_in) > NOW()
     """), {"email": data.email, "rid": data.resetId}).mappings().first()
     
@@ -192,11 +192,11 @@ async def reset_password(data: schemas.ResetCodeVerify, db: Session = Depends(ge
         raise HTTPException(status_code=400, detail="Invalid or expired code")
     
     new_hashed = hash_password(data.new_password)
-    db.execute(text("UPDATE users SET hashed_password = :p WHERE email = :e"), 
+    db.execute(text("UPDATE public.users SET hashed_password = :p WHERE email = :e"), 
                {"p": new_hashed, "e": data.email})
     
     # Update status of the reset code
-    db.execute(text("UPDATE resetcode SET status = 'used' WHERE id = :id"), {"id": record['id']})
+    db.execute(text("UPDATE public.resetcode SET status = 'used' WHERE id = :id"), {"id": record['id']})
     db.commit()
     
     return {"message": "Password updated successfully"}

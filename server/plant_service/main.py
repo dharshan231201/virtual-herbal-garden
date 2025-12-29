@@ -32,7 +32,7 @@ def list_plants(
     db: Session = Depends(get_db)
 ):
     """Fetch all plants or filter by search query."""
-    query_str = "SELECT * FROM plants"
+    query_str = "SELECT * FROM public.plants"
     params = {}
     
     if search_query:
@@ -56,7 +56,7 @@ def list_plants(
 @app.get("/plants/{plant_id}", response_model=schemas.Plant)
 def get_plant_detail(plant_id: int, db: Session = Depends(get_db)):
     """Fetch a single plant by its ID."""
-    query = text("SELECT * FROM plants WHERE plant_id = :id")
+    query = text("SELECT * FROM public.plants WHERE plant_id = :id")
     result = db.execute(query, {"id": plant_id}).first()
     
     if not result:
@@ -70,7 +70,7 @@ def get_user_bookmarks(email: str, db: Session = Depends(get_db)):
     """Retrieve all bookmarks for a specific user email."""
     query = text("""
         SELECT bookmark_id, email, plant_id, bookmarked_at 
-        FROM bookmarks WHERE email = :email
+        FROM public.bookmarks WHERE email = :email
     """)
     result = db.execute(query, {"email": email}).fetchall()
     if not result:
@@ -82,14 +82,14 @@ def add_bookmark(bookmark: schemas.BookmarkCreate, db: Session = Depends(get_db)
     """Create a bookmark link between a user (email) and a plant."""
     # 1. Verify the plant exists
     plant = db.execute(
-        text("SELECT 1 FROM plants WHERE plant_id = :pid"), 
+        text("SELECT 1 FROM public.plants WHERE plant_id = :pid"), 
         {"pid": bookmark.plant_id}
     ).first()
     if not plant:
         raise HTTPException(status_code=404, detail="Plant does not exist")
     
     # 2. check whether the plant is already bookamrked ?
-    existing_bookmark_query = text("SELECT bookmark_id FROM bookmarks WHERE email = :user_mail_id AND plant_id = :plant_id;")
+    existing_bookmark_query = text("SELECT bookmark_id FROM public.bookmarks WHERE email = :user_mail_id AND plant_id = :plant_id;")
     existing_bookmark = db.execute(existing_bookmark_query, {
         "user_mail_id": bookmark.email,
         "plant_id": bookmark.plant_id
@@ -98,7 +98,7 @@ def add_bookmark(bookmark: schemas.BookmarkCreate, db: Session = Depends(get_db)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This plant is already bookmarked by this user.")
     # 2. Insert bookmark (using 'user_email' to match your updated schema)
     query = text("""
-        INSERT INTO bookmarks (email, plant_id)
+        INSERT INTO public.bookmarks (email, plant_id)
         VALUES (:email, :pid)
         RETURNING bookmark_id, email, plant_id, bookmarked_at;
     """)
@@ -119,7 +119,7 @@ def add_bookmark(bookmark: schemas.BookmarkCreate, db: Session = Depends(get_db)
 @app.delete("/bookmarks/{email}/{plant_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_bookmark(email: str, plant_id: int, db: Session = Depends(get_db)):
     """Remove a specific bookmark."""
-    query = text("DELETE FROM bookmarks WHERE email = :email AND plant_id = :pid RETURNING bookmark_id")
+    query = text("DELETE FROM public.bookmarks WHERE email = :email AND plant_id = :pid RETURNING bookmark_id")
     result = db.execute(query, {"email": email, "pid": plant_id}).first()
     db.commit()
     if not result:
