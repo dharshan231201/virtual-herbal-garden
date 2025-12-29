@@ -6,6 +6,7 @@ psycopg2-binary==2.9.10
 sqlalchemy==2.0.41
 python-multipart==0.0.20
 python-dotenv==1.0.1
+python-jose
 google-generativeai
 Pillow==10.3.0
 passlib[bcrypt]
