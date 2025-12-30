@@ -9,7 +9,7 @@ function PlantList({ userBookmarks, onBookmarkToggled, showBookmarkedOnly }) {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [submittedSearchTerm, setSubmittedSearchTerm] = useState('');
-  
+
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const token = localStorage.getItem('token');
 
@@ -17,7 +17,7 @@ function PlantList({ userBookmarks, onBookmarkToggled, showBookmarkedOnly }) {
     setLoading(true);
     try {
       const params = submittedSearchTerm ? { q: submittedSearchTerm } : {};
-      const response = await axios.get(`${API_BASE_URL}/plants/`, { params });
+      const response = await axios.get(`${API_BASE_URL}/plants`, { params });
       setPlants(response.data);
     } catch (err) {
       setError("Failed to load plants.");
