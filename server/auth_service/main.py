@@ -180,8 +180,13 @@ async def forgot_password(data: schemas.ResetCodeCreate, db: Session = Depends(g
 
     message = MessageSchema(subject="Herbal Garden - Password Reset", recipients=[data.email], body=email_content, subtype=MessageType.html)
     fm = FastMail(mail_conf)
-    await fm.send_message(message)
-    return {"message": "Reset email sent"}
+    try:
+        await fm.send_message(message)
+    except Exception as e:
+    # Log but don't fail the API
+        print("Email send failed:", e)
+
+    return {"message": "If an account exists, an email has been sent."}
 
 @app.post("/auth/reset-password")
 async def reset_password(data: schemas.ResetCodeVerify, db: Session = Depends(get_db)):
