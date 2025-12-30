@@ -17,7 +17,7 @@ function PlantList({ userBookmarks, onBookmarkToggled, showBookmarkedOnly }) {
   const fetchPlants = useCallback(async () => {
     setLoading(true);
     try {
-      const params = submittedSearchTerm ? { q: submittedSearchTerm } : {};
+      const params = submittedSearchTerm ? { search_query: submittedSearchTerm } : {};
       const response = await axios.get(`${API_BASE_URL}/plants`, { params });
       setPlants(response.data);
     } catch (err) {
