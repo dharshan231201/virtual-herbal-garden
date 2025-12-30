@@ -9,7 +9,8 @@ python-dotenv==1.0.1
 python-jose
 google-generativeai
 Pillow==10.3.0
-passlib[bcrypt]
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
 fastapi-mail==1.4.1
 watchfiles
 httpcore

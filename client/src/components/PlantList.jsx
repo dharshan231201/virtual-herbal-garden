@@ -10,7 +10,7 @@ function PlantList({ userBookmarks, onBookmarkToggled, showBookmarkedOnly }) {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [submittedSearchTerm, setSubmittedSearchTerm] = useState('');
-
+  
   const API_BASE_URL = import.meta.env.VITE_PLANT_API;
   const token = localStorage.getItem('token');
 

@@ -45,10 +45,14 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-def hash_password(password: str):
+def hash_password(password: str) -> str:
+    if len(password.encode("utf-8")) > 72:
+        raise ValueError("Password too long")
     return pwd_context.hash(password)
 
-def verify_password(plain, hashed):
+def verify_password(plain: str, hashed: str) -> bool:
+    if not plain or len(plain.encode("utf-8")) > 72:
+        return False
     return pwd_context.verify(plain, hashed)
 
 # --- Endpoints ---
