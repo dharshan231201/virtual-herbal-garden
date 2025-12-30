@@ -81,6 +81,7 @@ async def register(user_data: schemas.UserCreate, db: Session = Depends(get_db))
     ).mappings().first()
 
     db.commit()
+    
 
     # Send welcome email (non-blocking)
     try:
@@ -150,19 +151,23 @@ async def forgot_password(data: schemas.ResetCodeCreate, db: Session = Depends(g
             {"email": data.email, "rid": reset_id}
         )
         db.commit()
-
+        
+        reset_link = f"{BASE_URL}/reset-password?code={reset_id}"
         try:
             send_email(
                 to=data.email,
-                subject="Herbal Garden - Password Reset",
+                subject="Herbal Garden – Reset your password",
                 html=f"""
-                <h3>Password Reset</h3>
-                <p>Reset code:</p>
-                <h2>{reset_id}</h2>
-                <p><a href="{BASE_URL}/reset-password?code={reset_id}">
-                Reset Password</a></p>
-                """
-            )
+                    <h3>Password Reset</h3>
+                    <p>Click the button below to set a new password:</p>
+                    <a href="{reset_link}"
+                    style="padding:10px 16px;background:#16a34a;color:white;text-decoration:none;border-radius:6px">
+                    Reset Password
+                    </a>
+                     <p>This link expires in 1 hour.</p>
+                     """
+                )
+
         except Exception as e:
             print("Email failed:", e)
 
