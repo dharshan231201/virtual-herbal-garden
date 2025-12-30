@@ -1,3 +1,4 @@
+// /client/src/components/PlantList.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import PlantCard from './PlantCard';
@@ -10,7 +11,7 @@ function PlantList({ userBookmarks, onBookmarkToggled, showBookmarkedOnly }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [submittedSearchTerm, setSubmittedSearchTerm] = useState('');
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE_URL = import.meta.env.VITE_PLANT_API;
   const token = localStorage.getItem('token');
 
   const fetchPlants = useCallback(async () => {
