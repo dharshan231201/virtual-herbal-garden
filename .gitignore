@@ -27,4 +27,7 @@
 /server/__pycache__
 server/*service-account*.json
 server/virtual-herbal-garden-*.json
+server/gmail_token.py
+server/token.json
+server/*.json
 gmail.txt
