@@ -15,45 +15,33 @@ import ResetPassword from "./components/ResetPassword";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 function App() {
-  // Persist login
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
+    const saved = localStorage.getItem("user");
+    return saved ? JSON.parse(saved) : null;
   });
 
   const [userBookmarks, setUserBookmarks] = useState(new Set());
   const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
 
-  // Fetch bookmarks
   const fetchUserBookmarks = useCallback(async (currentUser) => {
     const token = localStorage.getItem("token");
-
-    if (!currentUser || !token) {
-      setUserBookmarks(new Set());
-      return;
-    }
+    if (!currentUser || !token) return setUserBookmarks(new Set());
 
     try {
       const res = await axios.get(
         `${API_BASE_URL}/bookmarks/user/${currentUser.email}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      setUserBookmarks(new Set(res.data.map((b) => b.plant_id)));
-    } catch (err) {
-      console.error("Bookmark fetch failed:", err);
+      setUserBookmarks(new Set(res.data.map(b => b.plant_id)));
+    } catch {
       setUserBookmarks(new Set());
     }
   }, []);
 
   useEffect(() => {
     if (user) fetchUserBookmarks(user);
-    else setUserBookmarks(new Set());
   }, [user, fetchUserBookmarks]);
 
-  // Auth handlers
   const handleLogin = (userData, token) => {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(userData));
@@ -65,14 +53,6 @@ function App() {
     setUser(null);
     setUserBookmarks(new Set());
   };
-
-  const handleBookmarkToggled = useCallback((plantId, wasBookmarked) => {
-    setUserBookmarks((prev) => {
-      const updated = new Set(prev);
-      wasBookmarked ? updated.delete(plantId) : updated.add(plantId);
-      return updated;
-    });
-  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -86,28 +66,8 @@ function App() {
       <main className="flex-grow container mx-auto px-4 py-8">
         <Routes>
           <Route path="/" element={<Home />} />
-
-          <Route
-            path="/plants"
-            element={
-              <PlantList
-                userBookmarks={userBookmarks}
-                onBookmarkToggled={handleBookmarkToggled}
-                showBookmarkedOnly={showBookmarkedOnly}
-              />
-            }
-          />
-
-          <Route
-            path="/plants/:plantId"
-            element={
-              <PlantDetail
-                userBookmarks={userBookmarks}
-                onBookmarkToggled={handleBookmarkToggled}
-              />
-            }
-          />
-
+          <Route path="/plants" element={<PlantList userBookmarks={userBookmarks} />} />
+          <Route path="/plants/:plantId" element={<PlantDetail />} />
           <Route path="/ai-assistant" element={<AIChatAssistant user={user} />} />
           <Route path="/identify" element={<IdentifyPlant />} />
           <Route path="/login" element={<AuthPage onLogin={handleLogin} />} />
@@ -116,7 +76,7 @@ function App() {
       </main>
 
       <footer className="bg-gray-800 text-white text-center p-4">
-        <p>&copy; 2025 Virtual Herbal Garden. All rights reserved.</p>
+        © 2025 Virtual Herbal Garden
       </footer>
     </div>
   );
