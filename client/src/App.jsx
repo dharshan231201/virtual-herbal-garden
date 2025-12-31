@@ -14,6 +14,7 @@ import ResetPassword from "./components/ResetPassword";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 function App() {
+  // ✅ Auth state
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem("user");
     return saved ? JSON.parse(saved) : null;
@@ -22,6 +23,7 @@ function App() {
   const [userBookmarks, setUserBookmarks] = useState(new Set());
   const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
 
+  // ✅ Fetch bookmarks
   const fetchUserBookmarks = useCallback(async (currentUser) => {
     const token = localStorage.getItem("token");
     if (!currentUser || !token) {
@@ -34,7 +36,6 @@ function App() {
         `${API_BASE_URL}/bookmarks/user/${currentUser.email}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setUserBookmarks(new Set(res.data.map(b => b.plant_id)));
     } catch {
       setUserBookmarks(new Set());
@@ -43,15 +44,16 @@ function App() {
 
   useEffect(() => {
     if (user) fetchUserBookmarks(user);
-    else setUserBookmarks(new Set());
   }, [user, fetchUserBookmarks]);
 
+  // ✅ Login handler (instant UI update)
   const handleLogin = (userData, token) => {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
   };
 
+  // ✅ Logout handler
   const handleLogout = () => {
     localStorage.clear();
     setUser(null);
@@ -59,6 +61,7 @@ function App() {
     setShowBookmarkedOnly(false);
   };
 
+  // ✅ Bookmark toggle
   const handleBookmarkToggled = useCallback((plantId, wasBookmarked) => {
     setUserBookmarks(prev => {
       const updated = new Set(prev);
@@ -91,7 +94,16 @@ function App() {
             }
           />
 
-          <Route path="/plants/:plantId" element={<PlantDetail />} />
+          <Route
+            path="/plants/:plantId"
+            element={
+              <PlantDetail
+                userBookmarks={userBookmarks}
+                onBookmarkToggled={handleBookmarkToggled}
+              />
+            }
+          />
+
           <Route path="/ai-assistant" element={<AIChatAssistant user={user} />} />
           <Route path="/identify" element={<IdentifyPlant />} />
           <Route path="/login" element={<AuthPage onLogin={handleLogin} />} />
