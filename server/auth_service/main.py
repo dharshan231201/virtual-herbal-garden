@@ -91,7 +91,6 @@ async def register(user_data: schemas.UserCreate, db: Session = Depends(get_db))
             html=f"""
             <h3>Welcome to Herbal Garden 🌿</h3>
             <p>Your account has been created.</p>
-            <p><a href="{BASE_URL}/login">Login here</a></p>
             """
         )
     except Exception as e:
@@ -155,19 +154,15 @@ async def forgot_password(data: schemas.ResetCodeCreate, db: Session = Depends(g
         reset_link = f"{BASE_URL}/reset-password?code={reset_id}"
         try:
             send_email(
-                to=data.email,
-                subject="Herbal Garden – Reset your password",
-                html=f"""
-                    <h3>Password Reset</h3>
-                    <p>Click the button below to set a new password:</p>
-                    <a href="{reset_link}"
-                    style="padding:10px 16px;background:#16a34a;color:white;text-decoration:none;border-radius:6px">
-                    Reset Password
-                    </a>
-                     <p>This link expires in 1 hour.</p>
-                     """
-                )
-
+               to=data.email,
+               subject="Herbal Garden – Password Reset Code",
+               html=f"""
+                   <h3>Password Reset</h3>
+                   <p>Use the reset code below to set a new password:</p>
+                   <h2 style="letter-spacing:2px">{reset_id}</h2>
+                   <p>This code expires in 3 Minutes.</p>
+                   <p>If you didn’t request this, you can safely ignore this email.</p> """
+            )
         except Exception as e:
             print("Email failed:", e)
 
