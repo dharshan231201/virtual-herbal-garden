@@ -19,11 +19,11 @@ function AuthPage({ onLogin }) {
   const [emailSent, setEmailSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
-  // ⏱ Resend timer
+  // ⏱ resend timer
   useEffect(() => {
     if (cooldown <= 0) return;
-    const timer = setInterval(() => setCooldown((c) => c - 1), 1000);
-    return () => clearInterval(timer);
+    const t = setInterval(() => setCooldown((c) => c - 1), 1000);
+    return () => clearInterval(t);
   }, [cooldown]);
 
   const handleSubmit = async (e) => {
@@ -31,7 +31,7 @@ function AuthPage({ onLogin }) {
     setMessage({ type: "", text: "" });
 
     try {
-      let endpoint =
+      const endpoint =
         mode === "login"
           ? "/auth/login"
           : mode === "register"
@@ -53,7 +53,7 @@ function AuthPage({ onLogin }) {
       } else {
         setMessage({
           type: "success",
-          text: "Account created successfully.",
+          text: "Account created successfully. You can now login.",
         });
       }
     } catch (err) {
@@ -65,14 +65,19 @@ function AuthPage({ onLogin }) {
   };
 
   return (
-    <div className="max-w-md mx-auto my-10 p-8 bg-white rounded-xl shadow-lg">
-      <h2 className="text-2xl font-bold text-center mb-6 capitalize">
-        {mode === "forgot" ? "Forgot Password" : mode}
+    <div className="max-w-md mx-auto my-12 p-8 bg-white rounded-xl shadow-xl border border-gray-200">
+      <h2 className="text-3xl font-bold text-center text-green-800 mb-6">
+        {mode === "login"
+          ? "Login"
+          : mode === "register"
+          ? "Register"
+          : "Forgot Password"}
       </h2>
 
+      {/* MESSAGE */}
       {message.text && (
         <div
-          className={`mb-4 p-3 rounded text-center ${
+          className={`mb-5 p-3 rounded text-center font-medium ${
             message.type === "error"
               ? "bg-red-100 text-red-700"
               : "bg-green-100 text-green-700"
@@ -88,11 +93,13 @@ function AuthPage({ onLogin }) {
           type="email"
           required
           placeholder="Email address"
-          className="w-full p-3 border rounded"
           value={formData.email}
           onChange={(e) =>
             setFormData({ ...formData, email: e.target.value })
           }
+          className="w-full p-3 rounded-lg bg-[#ecf9ec] text-gray-800
+                     placeholder-gray-500 border border-green-300
+                     focus:outline-none focus:ring-2 focus:ring-green-500"
         />
 
         {mode !== "forgot" && (
@@ -100,17 +107,19 @@ function AuthPage({ onLogin }) {
             type="password"
             required
             placeholder="Password"
-            className="w-full p-3 border rounded"
             onChange={(e) =>
               setFormData({ ...formData, password: e.target.value })
             }
+            className="w-full p-3 rounded-lg bg-[#ecf9ec] text-gray-800
+                       placeholder-gray-500 border border-green-300
+                       focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         )}
 
         <button
           type="submit"
           disabled={mode === "forgot" && cooldown > 0}
-          className={`w-full py-3 rounded font-bold text-white ${
+          className={`w-full py-3 rounded-lg font-semibold text-white transition ${
             cooldown > 0
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-green-700 hover:bg-green-800"
@@ -126,29 +135,44 @@ function AuthPage({ onLogin }) {
         </button>
       </form>
 
-      {/* AFTER EMAIL SENT */}
+      {/* RESET BUTTON */}
       {mode === "forgot" && emailSent && (
-        <div className="mt-6 space-y-3 text-center">
+        <div className="mt-5">
           <button
             onClick={() => navigate("/reset-password")}
-            className="w-full bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700"
+            className="w-full bg-[#c2ecc2] text-green-900 py-2 rounded-lg font-semibold hover:bg-[#ecf9ec]"
           >
             I have a reset code → Reset Password
           </button>
         </div>
       )}
 
-      {/* FOOTER ACTIONS */}
-      <div className="mt-6 text-center text-sm">
-        {mode === "login" ? (
+      {/* FOOTER LINKS */}
+      <div className="mt-6 text-center text-sm text-gray-600">
+        {mode === "login" && (
           <>
-            <button onClick={() => setMode("register")} className="mr-3">
+            <button
+              onClick={() => setMode("register")}
+              className="text-green-700 hover:underline mr-3"
+            >
               Sign Up
             </button>
-            <button onClick={() => setMode("forgot")}>Forgot?</button>
+            <button
+              onClick={() => setMode("forgot")}
+              className="text-green-700 hover:underline"
+            >
+              Forgot Password?
+            </button>
           </>
-        ) : (
-          <button onClick={() => setMode("login")}>Back to Login</button>
+        )}
+
+        {mode !== "login" && (
+          <button
+            onClick={() => setMode("login")}
+            className="text-green-700 hover:underline"
+          >
+            Back to Login
+          </button>
         )}
       </div>
     </div>
