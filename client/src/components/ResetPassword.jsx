@@ -14,7 +14,7 @@ function ResetPassword() {
     const handleReset = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/reset-password`, data);
+            await axios.post(`${import.meta.env.VITE_AUTH_API}/auth/reset-password`, data);
             setMsg("Password updated! You can now login.");
         } catch (err) {
             setMsg(err.response?.data?.detail || "Error resetting password");

@@ -1,91 +1,165 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const AUTH_URL = import.meta.env.VITE_AUTH_API;
+const RESEND_TIME = 30; // seconds
 
 function AuthPage() {
-    const [mode, setMode] = useState('login'); 
-    const [formData, setFormData] = useState({ 
-        email: '', password: '', first_name: '', last_name: '' 
+  const [mode, setMode] = useState("login");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    first_name: "",
+    last_name: "",
+  });
+
+  const [message, setMessage] = useState("");
+  const [resetSent, setResetSent] = useState(false);
+  const [timer, setTimer] = useState(0);
+
+  const navigate = useNavigate();
+
+  // Countdown timer
+  useEffect(() => {
+    if (timer <= 0) return;
+    const interval = setInterval(() => {
+      setTimer((t) => t - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  const sendResetCode = async () => {
+    await axios.post(`${AUTH_URL}/auth/forgot-password`, {
+      email: formData.email,
     });
-    const [message, setMessage] = useState({ type: '', text: '' });
+    setResetSent(true);
+    setTimer(RESEND_TIME);
+    setMessage("Reset code sent to your email.");
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setMessage({ type: '', text: '' });
-        
-        try {
-            let endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
-            if (mode === 'forgot') endpoint = '/auth/forgot-password';
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage("");
 
-            const response = await axios.post(`${AUTH_URL}${endpoint}`, formData);
-            
-            if (mode === 'login') {
-                // Save the JWT and User ID for the other microservices
-                localStorage.setItem('token', response.data.access_token);
-                localStorage.setItem('user', JSON.stringify(response.data.user));
-                window.location.href = '/'; 
-            } else {
-                setMessage({ type: 'success', text: response.data.message || "Success! Please check your email." });
+    try {
+      if (mode === "forgot") {
+        await sendResetCode();
+        return;
+      }
+
+      const endpoint =
+        mode === "login" ? "/auth/login" : "/auth/register";
+
+      const res = await axios.post(`${AUTH_URL}${endpoint}`, formData);
+
+      if (mode === "login") {
+        localStorage.setItem("token", res.data.access_token);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        navigate("/");
+      } else {
+        setMessage("Account created successfully.");
+      }
+    } catch (err) {
+      setMessage(err.response?.data?.detail || "Request failed");
+    }
+  };
+
+  return (
+    <div className="max-w-md mx-auto my-10 p-8 bg-white shadow-xl rounded">
+      <h2 className="text-2xl font-bold text-center mb-2 capitalize">
+        {mode === "forgot" ? "Forgot Password" : mode}
+      </h2>
+
+      {message && (
+        <p className="text-center text-sm text-green-700 mb-4">
+          {message}
+        </p>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          type="email"
+          required
+          placeholder="Email address"
+          className="w-full p-3 border rounded"
+          onChange={(e) =>
+            setFormData({ ...formData, email: e.target.value })
+          }
+        />
+
+        {mode !== "forgot" && (
+          <input
+            type="password"
+            required
+            placeholder="Password"
+            className="w-full p-3 border rounded"
+            onChange={(e) =>
+              setFormData({ ...formData, password: e.target.value })
             }
-        } catch (err) {
-            setMessage({ type: 'error', text: err.response?.data?.detail || "Authentication failed" });
-        }
-    };
+          />
+        )}
 
-    return (
-        <div className="max-w-md mx-auto my-10 p-8 bg-white rounded-xl shadow-2xl border border-gray-100">
-            <h2 className="text-3xl font-bold mb-6 text-center text-green-800 capitalize">{mode}</h2>
-            
-            {message.text && (
-                <div className={`p-3 mb-4 rounded-lg text-sm font-medium text-center ${
-                    message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                }`}>
-                    {message.text}
-                </div>
-            )}
+        <button className="w-full bg-green-700 text-white py-3 rounded font-semibold">
+          {mode === "login"
+            ? "Sign In"
+            : mode === "register"
+            ? "Create Account"
+            : "Send Reset Code"}
+        </button>
+      </form>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <input 
-                    type="email" placeholder="Email Address" required
-                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                />
-                
-                {mode !== 'forgot' && (
-                    <input 
-                        type="password" placeholder="Password" required
-                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                        onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    />
-                )}
+      {/* Forgot Password UX */}
+      {resetSent && (
+        <div className="mt-6 space-y-3 text-center">
+          <p className="text-sm text-gray-600">
+            Check your inbox (and spam folder) for the reset code.
+          </p>
 
-                {mode === 'register' && (
-                    <div className="flex gap-2">
-                        <input type="text" placeholder="First Name" className="w-1/2 p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                            onChange={(e) => setFormData({...formData, first_name: e.target.value})} />
-                        <input type="text" placeholder="Last Name" className="w-1/2 p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                            onChange={(e) => setFormData({...formData, last_name: e.target.value})} />
-                    </div>
-                )}
+          <button
+            onClick={() => navigate("/reset-password")}
+            className="w-full bg-blue-600 text-white py-2 rounded"
+          >
+            🔐 Reset Password
+          </button>
 
-                <button type="submit" className="w-full bg-green-700 text-white py-3 rounded-lg font-bold hover:bg-green-800 transition shadow-md">
-                    {mode === 'login' ? 'Sign In' : mode === 'register' ? 'Create Account' : 'Reset Password'}
-                </button>
-            </form>
-
-            <div className="mt-6 text-sm text-center flex justify-center gap-4 text-gray-600">
-                {mode === 'login' ? (
-                    <>
-                        <button onClick={() => setMode('register')} className="hover:text-green-700 font-semibold">Sign Up</button>
-                        <span>|</span>
-                        <button onClick={() => setMode('forgot')} className="hover:text-green-700 font-semibold">Forgot?</button>
-                    </>
-                ) : (
-                    <button onClick={() => setMode('login')} className="hover:text-green-700 font-semibold">Already have an account? Login</button>
-                )}
-            </div>
+          {timer > 0 ? (
+            <p className="text-xs text-gray-500">
+              Resend available in {timer}s
+            </p>
+          ) : (
+            <button
+              onClick={sendResetCode}
+              className="text-sm text-blue-600 underline"
+            >
+              Didn’t get the email? Resend code
+            </button>
+          )}
         </div>
-    );
+      )}
+
+      {/* Footer Links */}
+      <div className="mt-6 text-sm text-center">
+        {mode === "login" && (
+          <>
+            <button onClick={() => setMode("register")}>
+              Sign Up
+            </button>{" "}
+            |{" "}
+            <button onClick={() => setMode("forgot")}>
+              Forgot?
+            </button>
+          </>
+        )}
+
+        {mode !== "login" && (
+          <button onClick={() => setMode("login")}>
+            Back to Login
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
+
 export default AuthPage;
