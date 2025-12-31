@@ -95,9 +95,9 @@ async def identify_plant(image: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File must be an image")
 
     try:
-        # -------------------------------
-        # 1️⃣ IDENTIFY via PlantNet
-        # -------------------------------
+        # ==============================
+        # 1️⃣ IDENTIFY USING PLANTNET
+        # ==============================
         image_bytes = await image.read()
 
         files = {
@@ -109,13 +109,11 @@ async def identify_plant(image: UploadFile = File(...)):
         res = requests.post(url, files=files, data=data, timeout=30)
         res.raise_for_status()
 
-        result = res.json()
-        results = result.get("results", [])
-
+        results = res.json().get("results", [])
         if not results:
             return {
                 "plant_name": "Unknown Plant",
-                "description": "Could not identify the plant from the image.",
+                "description": "Could not identify the plant.",
                 "usage": "No usage information available.",
                 "confidence": None
             }
@@ -126,18 +124,17 @@ async def identify_plant(image: UploadFile = File(...)):
         scientific_name = species.get("scientificName", "Unknown")
         common_names = species.get("commonNames") or []
         plant_name = common_names[0] if common_names else scientific_name
-        confidence = round(best.get("score", 0) * 100, 2)
 
-        # -------------------------------
-        # 2️⃣ ENRICH via Groq (TEXT ONLY)
-        # -------------------------------
+        # ==============================
+        # 2️⃣ GET DESCRIPTION FROM GROQ
+        # ==============================
         groq_prompt = f"""
-Provide concise herbal information for the plant below.
+Provide herbal information for the plant below.
 
 Plant Name: {plant_name}
 Scientific Name: {scientific_name}
 
-Return in this format:
+Respond STRICTLY in this format:
 Description:
 Usage:
 Precautions:
@@ -146,14 +143,8 @@ Precautions:
         payload = {
             "model": "llama-3.1-8b-instant",
             "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a knowledgeable herbal medicine assistant."
-                },
-                {
-                    "role": "user",
-                    "content": groq_prompt
-                }
+                {"role": "system", "content": "You are a herbal medicine expert."},
+                {"role": "user", "content": groq_prompt}
             ],
             "temperature": 0.3
         }
@@ -173,9 +164,9 @@ Precautions:
         groq_res.raise_for_status()
         ai_text = groq_res.json()["choices"][0]["message"]["content"]
 
-        # -------------------------------
-        # 3️⃣ PARSE AI RESPONSE
-        # -------------------------------
+        # ==============================
+        # 3️⃣ PARSE GROQ RESPONSE
+        # ==============================
         description = ""
         usage = ""
         precautions = ""
@@ -190,9 +181,9 @@ Precautions:
 
         return {
             "plant_name": plant_name,
-            "description": description or f"Scientific name: {scientific_name}",
-            "usage": usage or "No usage information available.",
-            "confidence": confidence
+            "description": description,
+            "usage": f"{usage}\n\n⚠️ Precautions: {precautions}",
+            "confidence": None  # ❌ not used
         }
 
     except Exception as e:
