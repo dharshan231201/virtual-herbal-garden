@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 
 const AUTH_URL = import.meta.env.VITE_AUTH_API;
 
@@ -8,18 +9,18 @@ function AuthPage({ onLogin }) {
   const navigate = useNavigate();
 
   const [mode, setMode] = useState("login");
+  const [showPassword, setShowPassword] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [emailSent, setEmailSent] = useState(false);
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    first_name: "",
-    last_name: "",
   });
 
   const [message, setMessage] = useState({ type: "", text: "" });
-  const [emailSent, setEmailSent] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
 
-  // ⏱ resend timer
+  /* ⏱ cooldown timer */
   useEffect(() => {
     if (cooldown <= 0) return;
     const t = setInterval(() => setCooldown((c) => c - 1), 1000);
@@ -53,7 +54,7 @@ function AuthPage({ onLogin }) {
       } else {
         setMessage({
           type: "success",
-          text: "Account created successfully. You can now login.",
+          text: "Account created successfully. Please login.",
         });
       }
     } catch (err) {
@@ -65,7 +66,7 @@ function AuthPage({ onLogin }) {
   };
 
   return (
-    <div className="max-w-md mx-auto my-12 p-8 bg-white rounded-xl shadow-xl border border-gray-200">
+    <div className="max-w-md mx-auto my-12 p-8 bg-white rounded-xl shadow-xl border border-green-200">
       <h2 className="text-3xl font-bold text-center text-green-800 mb-6">
         {mode === "login"
           ? "Login"
@@ -77,10 +78,10 @@ function AuthPage({ onLogin }) {
       {/* MESSAGE */}
       {message.text && (
         <div
-          className={`mb-5 p-3 rounded text-center font-medium ${
+          className={`mb-4 p-3 rounded text-center font-medium ${
             message.type === "error"
               ? "bg-red-100 text-red-700"
-              : "bg-green-100 text-green-700"
+              : "bg-[#c2ecc2] text-green-900"
           }`}
         >
           {message.text}
@@ -89,6 +90,7 @@ function AuthPage({ onLogin }) {
 
       {/* FORM */}
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* EMAIL */}
         <input
           type="email"
           required
@@ -97,31 +99,43 @@ function AuthPage({ onLogin }) {
           onChange={(e) =>
             setFormData({ ...formData, email: e.target.value })
           }
-          className="w-full p-3 rounded-lg bg-[#ecf9ec] text-gray-800
-                     placeholder-gray-500 border border-green-300
+          className="w-full p-3 rounded-lg bg-[#ecf9ec] text-green-900
+                     placeholder-green-700 border border-green-300
                      focus:outline-none focus:ring-2 focus:ring-green-500"
         />
 
+        {/* PASSWORD */}
         {mode !== "forgot" && (
-          <input
-            type="password"
-            required
-            placeholder="Password"
-            onChange={(e) =>
-              setFormData({ ...formData, password: e.target.value })
-            }
-            className="w-full p-3 rounded-lg bg-[#ecf9ec] text-gray-800
-                       placeholder-gray-500 border border-green-300
-                       focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              placeholder="Password"
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
+              className="w-full p-3 pr-12 rounded-lg bg-[#ecf9ec] text-green-900
+                         placeholder-green-700 border border-green-300
+                         focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute inset-y-0 right-3 flex items-center text-green-700"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
         )}
 
+        {/* BUTTON */}
         <button
           type="submit"
           disabled={mode === "forgot" && cooldown > 0}
           className={`w-full py-3 rounded-lg font-semibold text-white transition ${
             cooldown > 0
-              ? "bg-gray-400 cursor-not-allowed"
+              ? "bg-green-300 cursor-not-allowed"
               : "bg-green-700 hover:bg-green-800"
           }`}
         >
@@ -135,25 +149,23 @@ function AuthPage({ onLogin }) {
         </button>
       </form>
 
-      {/* RESET BUTTON */}
+      {/* RESET LINK */}
       {mode === "forgot" && emailSent && (
-        <div className="mt-5">
-          <button
-            onClick={() => navigate("/reset-password")}
-            className="w-full bg-[#c2ecc2] text-green-900 py-2 rounded-lg font-semibold hover:bg-[#ecf9ec]"
-          >
-            I have a reset code → Reset Password
-          </button>
-        </div>
+        <button
+          onClick={() => navigate("/reset-password")}
+          className="mt-4 w-full bg-[#c2ecc2] text-green-900 py-2 rounded-lg font-semibold hover:bg-[#ecf9ec]"
+        >
+          I have a reset code → Reset Password
+        </button>
       )}
 
-      {/* FOOTER LINKS */}
-      <div className="mt-6 text-center text-sm text-gray-600">
+      {/* FOOTER */}
+      <div className="mt-6 text-center text-sm">
         {mode === "login" && (
           <>
             <button
               onClick={() => setMode("register")}
-              className="text-green-700 hover:underline mr-3"
+              className="text-green-700 hover:underline mr-4"
             >
               Sign Up
             </button>
