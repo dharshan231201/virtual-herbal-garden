@@ -1,139 +1,100 @@
-#/server/ai_service/main.py
+# /server/ai_service/main.py
 import os
-import io
-from fastapi import FastAPI, HTTPException, UploadFile, File, status
-from PIL import Image
-import google.generativeai as genai
-from google.generativeai.types import HarmCategory,HarmBlockThreshold
-
-# Shared imports
-from common import schemas
-from common.utils import setup_cors  # Import the utility
-
-from pathlib import Path
+import requests
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from dotenv import load_dotenv
-BASE_DIR = Path(__file__).resolve().parent.parent
-env_path = BASE_DIR / ".env"
 
-# 2. Force Load
-load_dotenv(dotenv_path=env_path)
+from common import schemas
+from common.utils import setup_cors
+
+load_dotenv()
 
 app = FastAPI(title="Herbal Garden - AI Service")
 setup_cors(app)
 
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    raise ValueError("GEMINI_API_KEY not found in environment variables")
-genai.configure(api_key=api_key)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+PLANTNET_API_KEY = os.getenv("PLANTNET_API_KEY")
+
+if not GROQ_API_KEY:
+    raise RuntimeError("GROQ_API_KEY missing")
+if not PLANTNET_API_KEY:
+    raise RuntimeError("PLANTNET_API_KEY missing")
 
 
 @app.get("/")
-async def health_check():
-    return {"status": "AI Service is running"}
-
-# --- AI Chat Endpoint ---
-
-@app.get("/list_gemini_models/")
-async def list_gemini_models():
-    available_models = []
-    try:
-        for m in genai.list_models():
-            # Filter for models that support text generation using generateContent
-            if 'generateContent' in m.supported_generation_methods:
-                available_models.append({
-                    "name": m.name,
-                    "supported_methods": m.supported_generation_methods
-                })
-        return {"available_gemini_models": available_models}
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error listing models: {e}")
+async def health():
+    return {"status": "AI Service running (Groq + PlantNet)"}
 
 
-
-
+# =====================
+# AI CHAT (Groq)
+# =====================
 @app.post("/ai/chat", response_model=schemas.ChatResponse)
 async def chat_with_ai(chat_request: schemas.ChatRequest):
     try:
-        # Use the lightweight flash model for speed
-        model = genai.GenerativeModel('models/gemini-1.5-flash')
-        
-        # System instruction to keep the AI focused
-        context = (
-            "You are a helpful assistant for a virtual herbal garden. "
-            "Provide information about plants, their uses, and general herbal remedies based on traditional knowledge. "
-            "Keep responses concise and informative."
+        res = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "llama3-70b-8192",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a herbal expert assistant.",
+                    },
+                    {"role": "user", "content": chat_request.message},
+                ],
+            },
+            timeout=20,
         )
-        
-        full_prompt_for_ai = f"{context}\n\nUser query: {chat_request.message}"
-        response = await model.generate_content_async(
-            contents=[{"role": "user", "parts": [full_prompt_for_ai]}] # Pass the combined prompt here
-            # Remove the system_instruction=... parameter as it's not recognized
-        )
-        ai_response = response.text
-        return {"response": ai_response}
-    except Exception as e:
-        print(f"Gemini API error: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"AI Chat error: {e}")
+        res.raise_for_status()
+        text = res.json()["choices"][0]["message"]["content"]
+        return {"response": text}
 
-# --- Plant Identification Endpoint ---
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# =====================
+# PLANT IDENTIFY (PlantNet)
+# =====================
 @app.post("/ai/identify", response_model=schemas.PlantIdentificationResponse)
 async def identify_plant(image: UploadFile = File(...)):
-    # Validate file type
     if not image.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Uploaded file must be an image.")
+        raise HTTPException(status_code=400, detail="Invalid image")
 
     try:
-        # Process image for Gemini
-        image_bytes = await image.read()
-        img = Image.open(io.BytesIO(image_bytes))
+        img = await image.read()
 
-        model = genai.GenerativeModel('models/gemini-1.5-flash')
-        
-        prompt = [
-            "Analyze this image and identify the plant. "
-            "Then, provide a brief description of the plant and its common traditional/medicinal usages. "
-            "Format your response strictly as follows: "
-            "Plant Name: [Name]\nDescription: [Description]\nUsage: [Usage]\n"
-            "If you cannot identify it, state 'Unknown Plant'.",
-            img
-        ]
+        res = requests.post(
+            f"https://my-api.plantnet.org/v2/identify/all?api-key={PLANTNET_API_KEY}",
+            files={"images": ("plant.jpg", img, image.content_type)},
+            data={"organs": ["leaf"]},
+            timeout=30,
+        )
+        res.raise_for_status()
+        data = res.json()
 
-        response = await model.generate_content_async(
-            prompt,
-            safety_settings={
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+        if not data.get("results"):
+            return {
+                "plant_name": "Unknown Plant",
+                "description": "Could not identify the plant.",
+                "usage": "No usage information available.",
+                "confidence": None,
             }
-        )
-        ai_text = response.text
 
-        plant_name = "Unknown Plant"
-        description = "Could not identify the plant or its description."
-        usage = "No usage information available."
-        confidence = None
+        best = data["results"][0]
+        species = best["species"]
 
-        for line in ai_text.split('\n'):
-            if line.startswith("Plant Name:"):
-                plant_name = line.replace("Plant Name:", "").strip()
-            elif line.startswith("Description:"):
-                description = line.replace("Description:", "").strip()
-            elif line.startswith("Usage:"):
-                usage = line.replace("Usage:", "").strip()
-
-        if "unknown plant" in plant_name.lower():
-            description = "The AI could not identify this plant from the image."
-            usage = "No specific usage information available."
-
-        return schemas.PlantIdentificationResponse(
-            plant_name=plant_name,
-            description=description,
-            usage=usage,
-            confidence=confidence
-        )
+        return {
+            "plant_name": species.get("commonNames", ["Unknown"])[0],
+            "description": f"Scientific name: {species.get('scientificName')}",
+            "usage": "Ask the AI assistant for medicinal uses.",
+            "confidence": round(best["score"] * 100, 2),
+        }
 
     except Exception as e:
-        print(f"Error in plant identification: {e}")
-        # Explicitly convert the exception to a string for the detail message
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to identify plant: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
