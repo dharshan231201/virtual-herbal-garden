@@ -1,4 +1,3 @@
-# /server/ai_service/main.py
 import os
 import requests
 from fastapi import FastAPI, HTTPException, UploadFile, File
@@ -25,7 +24,7 @@ if not PLANTNET_API_KEY:
 # APP
 # =========================
 app = FastAPI(title="Herbal Garden - AI Service")
-setup_cors(app)   # ✅ IMPORTANT for frontend
+setup_cors(app)
 
 # =========================
 # HEALTH
@@ -35,13 +34,13 @@ async def health():
     return {"status": "AI Service running (Groq + PlantNet)"}
 
 # =========================
-# AI CHAT (Groq)
+# AI CHAT (Groq) ✅ FIXED
 # =========================
 @app.post("/ai/chat", response_model=schemas.ChatResponse)
 async def chat_with_ai(chat_request: schemas.ChatRequest):
     try:
         payload = {
-            "model": "llama3-70b-8192",
+            "model": "llama3-8b-8192",  # ✅ FREE + STABLE
             "messages": [
                 {
                     "role": "system",
@@ -55,7 +54,8 @@ async def chat_with_ai(chat_request: schemas.ChatRequest):
                     "role": "user",
                     "content": chat_request.message
                 }
-            ]
+            ],
+            "temperature": 0.4
         }
 
         headers = {
@@ -63,20 +63,28 @@ async def chat_with_ai(chat_request: schemas.ChatRequest):
             "Content-Type": "application/json"
         }
 
-        response = requests.post(
+        res = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             json=payload,
             headers=headers,
             timeout=20
         )
 
-        response.raise_for_status()
+        if res.status_code != 200:
+            print("Groq error:", res.text)
+            raise HTTPException(
+                status_code=500,
+                detail="Groq API error. Check backend logs."
+            )
 
-        ai_text = response.json()["choices"][0]["message"]["content"]
+        data = res.json()
+        ai_text = data["choices"][0]["message"]["content"]
+
         return {"response": ai_text}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI chat failed: {str(e)}")
+        print("AI CHAT FAILED:", str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 # =========================
 # PLANT IDENTIFICATION (PlantNet)
@@ -93,9 +101,7 @@ async def identify_plant(image: UploadFile = File(...)):
             "images": ("plant.jpg", image_bytes, image.content_type)
         }
 
-        data = {
-            "organs": "leaf"
-        }
+        data = {"organs": "leaf"}
 
         url = f"https://my-api.plantnet.org/v2/identify/all?api-key={PLANTNET_API_KEY}"
 
@@ -105,12 +111,11 @@ async def identify_plant(image: UploadFile = File(...)):
         result = res.json()
         results = result.get("results", [])
 
-        # ✅ SAFE fallback
         if not results:
             return {
                 "plant_name": "Unknown Plant",
-                "description": "Could not confidently identify the plant.",
-                "usage": "Ask the AI Assistant for more details.",
+                "description": "Could not identify the plant.",
+                "usage": "Try asking the AI assistant.",
                 "confidence": None
             }
 
@@ -120,21 +125,16 @@ async def identify_plant(image: UploadFile = File(...)):
         common_names = species.get("commonNames") or []
         scientific_name = species.get("scientificName", "Unknown")
 
-        plant_name = (
-            common_names[0]
-            if isinstance(common_names, list) and len(common_names) > 0
-            else scientific_name
-        )
-
+        plant_name = common_names[0] if common_names else scientific_name
         confidence = round(best.get("score", 0) * 100, 2)
 
         return {
             "plant_name": plant_name,
             "description": f"Scientific name: {scientific_name}",
-            "usage": "Use the AI Assistant to explore medicinal uses and precautions.",
+            "usage": "Use the AI assistant for medicinal details.",
             "confidence": confidence
         }
 
     except Exception as e:
-        print("Plant identification error:", str(e))
+        print("PLANT IDENTIFY ERROR:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
