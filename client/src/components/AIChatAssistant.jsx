@@ -44,7 +44,7 @@ function AIChatAssistant() {
   };
 
   return (
-    <div className="flex flex-col h-[70vh] bg-white rounded-lg shadow-lg p-6">
+    <div className="flex flex-col h-[70vh] bg-white text-gray-800 rounded-lg shadow-lg p-6">
       <h2 className="text-2xl font-bold mb-4">AI Herbal Assistant</h2>
 
       <div className="flex-1 overflow-y-auto mb-4 bg-gray-50 p-3 rounded">
