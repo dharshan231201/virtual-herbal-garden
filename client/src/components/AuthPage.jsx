@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -14,7 +14,17 @@ function AuthPage({ onLogin }) {
     first_name: "",
     last_name: "",
   });
+
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [emailSent, setEmailSent] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  // ⏱ Resend timer
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => setCooldown((c) => c - 1), 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,11 +42,18 @@ function AuthPage({ onLogin }) {
 
       if (mode === "login") {
         onLogin(res.data.user, res.data.access_token);
-        navigate("/"); // ✅ SPA-safe redirect
+        navigate("/");
+      } else if (mode === "forgot") {
+        setEmailSent(true);
+        setCooldown(60);
+        setMessage({
+          type: "success",
+          text: "If the account exists, a reset email has been sent.",
+        });
       } else {
         setMessage({
           type: "success",
-          text: res.data.message || "Please check your email.",
+          text: "Account created successfully.",
         });
       }
     } catch (err) {
@@ -49,7 +66,9 @@ function AuthPage({ onLogin }) {
 
   return (
     <div className="max-w-md mx-auto my-10 p-8 bg-white rounded-xl shadow-lg">
-      <h2 className="text-2xl font-bold text-center mb-6 capitalize">{mode}</h2>
+      <h2 className="text-2xl font-bold text-center mb-6 capitalize">
+        {mode === "forgot" ? "Forgot Password" : mode}
+      </h2>
 
       {message.text && (
         <div
@@ -63,12 +82,14 @@ function AuthPage({ onLogin }) {
         </div>
       )}
 
+      {/* FORM */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="email"
           required
-          placeholder="Email"
+          placeholder="Email address"
           className="w-full p-3 border rounded"
+          value={formData.email}
           onChange={(e) =>
             setFormData({ ...formData, email: e.target.value })
           }
@@ -86,36 +107,38 @@ function AuthPage({ onLogin }) {
           />
         )}
 
-        {mode === "register" && (
-          <>
-            <input
-              type="text"
-              placeholder="First Name"
-              className="w-full p-3 border rounded"
-              onChange={(e) =>
-                setFormData({ ...formData, first_name: e.target.value })
-              }
-            />
-            <input
-              type="text"
-              placeholder="Last Name"
-              className="w-full p-3 border rounded"
-              onChange={(e) =>
-                setFormData({ ...formData, last_name: e.target.value })
-              }
-            />
-          </>
-        )}
-
-        <button className="w-full bg-green-700 text-white py-3 rounded font-bold">
-          {mode === "login"
+        <button
+          type="submit"
+          disabled={mode === "forgot" && cooldown > 0}
+          className={`w-full py-3 rounded font-bold text-white ${
+            cooldown > 0
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-green-700 hover:bg-green-800"
+          }`}
+        >
+          {mode === "forgot"
+            ? cooldown > 0
+              ? `Resend in ${cooldown}s`
+              : "Send Reset Code"
+            : mode === "login"
             ? "Sign In"
-            : mode === "register"
-            ? "Create Account"
-            : "Send Reset Code"}
+            : "Create Account"}
         </button>
       </form>
 
+      {/* AFTER EMAIL SENT */}
+      {mode === "forgot" && emailSent && (
+        <div className="mt-6 space-y-3 text-center">
+          <button
+            onClick={() => navigate("/reset-password")}
+            className="w-full bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700"
+          >
+            I have a reset code → Reset Password
+          </button>
+        </div>
+      )}
+
+      {/* FOOTER ACTIONS */}
       <div className="mt-6 text-center text-sm">
         {mode === "login" ? (
           <>
