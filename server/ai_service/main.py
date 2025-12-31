@@ -34,13 +34,13 @@ async def health():
     return {"status": "AI Service running (Groq + PlantNet)"}
 
 # =========================
-# AI CHAT (Groq) ✅ FIXED
+# AI CHAT (Groq)
 # =========================
 @app.post("/ai/chat", response_model=schemas.ChatResponse)
 async def chat_with_ai(chat_request: schemas.ChatRequest):
     try:
         payload = {
-            "model": "llama-3.1-8b-instant",  # ✅ FREE + STABLE
+            "model": "llama-3.1-8b-instant",
             "messages": [
                 {
                     "role": "system",
@@ -70,24 +70,17 @@ async def chat_with_ai(chat_request: schemas.ChatRequest):
             timeout=20
         )
 
-        if res.status_code != 200:
-            print("Groq error:", res.text)
-            raise HTTPException(
-                status_code=500,
-                detail="Groq API error. Check backend logs."
-            )
-
-        data = res.json()
-        ai_text = data["choices"][0]["message"]["content"]
+        res.raise_for_status()
+        ai_text = res.json()["choices"][0]["message"]["content"]
 
         return {"response": ai_text}
 
     except Exception as e:
-        print("AI CHAT FAILED:", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        print("AI CHAT ERROR:", str(e))
+        raise HTTPException(status_code=500, detail="AI chat failed")
 
 # =========================
-# PLANT IDENTIFICATION (PlantNet)
+# PLANT IDENTIFICATION (PlantNet + Groq)
 # =========================
 @app.post("/ai/identify", response_model=schemas.PlantIdentificationResponse)
 async def identify_plant(image: UploadFile = File(...)):
@@ -95,58 +88,62 @@ async def identify_plant(image: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File must be an image")
 
     try:
-        # ==============================
-        # 1️⃣ IDENTIFY USING PLANTNET
-        # ==============================
+        # --------------------------
+        # 1️⃣ Identify via PlantNet
+        # --------------------------
         image_bytes = await image.read()
 
         files = {
             "images": ("plant.jpg", image_bytes, image.content_type)
         }
+
         data = {"organs": "leaf"}
 
         url = f"https://my-api.plantnet.org/v2/identify/all?api-key={PLANTNET_API_KEY}"
+
         res = requests.post(url, files=files, data=data, timeout=30)
         res.raise_for_status()
 
-        results = res.json().get("results", [])
+        result = res.json()
+        results = result.get("results", [])
+
         if not results:
             return {
                 "plant_name": "Unknown Plant",
                 "description": "Could not identify the plant.",
-                "usage": "No usage information available.",
+                "usage": "Try asking the AI assistant for general herbal guidance.",
                 "confidence": None
             }
 
         best = results[0]
         species = best.get("species", {})
 
-        scientific_name = species.get("scientificName", "Unknown")
         common_names = species.get("commonNames") or []
+        scientific_name = species.get("scientificName", "Unknown")
+
         plant_name = common_names[0] if common_names else scientific_name
 
-        # ==============================
-        # 2️⃣ GET DESCRIPTION FROM GROQ
-        # ==============================
-        groq_prompt = f"""
-Provide herbal information for the plant below.
+        # --------------------------
+        # 2️⃣ Ask Groq for details
+        # --------------------------
+        prompt = (
+            f"Provide information about the plant '{plant_name}'.\n\n"
+            "Format exactly as:\n"
+            "Description:\n"
+            "- short paragraph\n\n"
+            "Usage:\n"
+            "- traditional or common uses\n\n"
+            "Precautions:\n"
+            "- safety warnings\n"
+        )
 
-Plant Name: {plant_name}
-Scientific Name: {scientific_name}
-
-Respond STRICTLY in this format:
-Description:
-Usage:
-Precautions:
-"""
-
-        payload = {
+        groq_payload = {
             "model": "llama-3.1-8b-instant",
             "messages": [
                 {"role": "system", "content": "You are a herbal medicine expert."},
-                {"role": "user", "content": groq_prompt}
+                {"role": "user", "content": prompt}
             ],
-            "temperature": 0.3
+            "temperature": 0.4
         }
 
         headers = {
@@ -156,7 +153,7 @@ Precautions:
 
         groq_res = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
-            json=payload,
+            json=groq_payload,
             headers=headers,
             timeout=20
         )
@@ -164,28 +161,60 @@ Precautions:
         groq_res.raise_for_status()
         ai_text = groq_res.json()["choices"][0]["message"]["content"]
 
-        # ==============================
-        # 3️⃣ PARSE GROQ RESPONSE
-        # ==============================
-        description = ""
-        usage = ""
-        precautions = ""
+        # --------------------------
+        # 3️⃣ ROBUST PARSING (FIX)
+        # --------------------------
+        description_lines = []
+        usage_lines = []
+        precaution_lines = []
+
+        current_section = None
 
         for line in ai_text.splitlines():
-            if line.lower().startswith("description"):
-                description = line.split(":", 1)[1].strip()
-            elif line.lower().startswith("usage"):
-                usage = line.split(":", 1)[1].strip()
-            elif line.lower().startswith("precautions"):
-                precautions = line.split(":", 1)[1].strip()
+            clean = line.strip()
+            if not clean:
+                continue
+
+            lower = clean.lower()
+
+            if lower.startswith("description"):
+                current_section = "description"
+                continue
+            elif lower.startswith("usage"):
+                current_section = "usage"
+                continue
+            elif lower.startswith("precautions"):
+                current_section = "precautions"
+                continue
+
+            if current_section == "description":
+                description_lines.append(clean)
+            elif current_section == "usage":
+                usage_lines.append(clean)
+            elif current_section == "precautions":
+                precaution_lines.append(clean)
+
+        description = " ".join(description_lines).strip()
+        usage = " ".join(usage_lines).strip()
+        precautions = " ".join(precaution_lines).strip()
+
+        if not description:
+            description = "General botanical information is limited for this plant."
+
+        if not usage:
+            usage = "No well-documented traditional usage available."
+
+        final_usage = usage
+        if precautions:
+            final_usage += f"\n\n⚠️ Precautions: {precautions}"
 
         return {
             "plant_name": plant_name,
             "description": description,
-            "usage": f"{usage}\n\n⚠️ Precautions: {precautions}",
-            "confidence": None  # ❌ not used
+            "usage": final_usage,
+            "confidence": None
         }
 
     except Exception as e:
-        print("IDENTIFY ERROR:", str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        print("PLANT IDENTIFY ERROR:", str(e))
+        raise HTTPException(status_code=500, detail="Plant identification failed")
