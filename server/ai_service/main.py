@@ -95,16 +95,17 @@ async def identify_plant(image: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File must be an image")
 
     try:
+        # -------------------------------
+        # 1️⃣ IDENTIFY via PlantNet
+        # -------------------------------
         image_bytes = await image.read()
 
         files = {
             "images": ("plant.jpg", image_bytes, image.content_type)
         }
-
         data = {"organs": "leaf"}
 
         url = f"https://my-api.plantnet.org/v2/identify/all?api-key={PLANTNET_API_KEY}"
-
         res = requests.post(url, files=files, data=data, timeout=30)
         res.raise_for_status()
 
@@ -114,27 +115,86 @@ async def identify_plant(image: UploadFile = File(...)):
         if not results:
             return {
                 "plant_name": "Unknown Plant",
-                "description": "Could not identify the plant.",
-                "usage": "Try asking the AI assistant.",
+                "description": "Could not identify the plant from the image.",
+                "usage": "No usage information available.",
                 "confidence": None
             }
 
         best = results[0]
         species = best.get("species", {})
 
-        common_names = species.get("commonNames") or []
         scientific_name = species.get("scientificName", "Unknown")
-
+        common_names = species.get("commonNames") or []
         plant_name = common_names[0] if common_names else scientific_name
         confidence = round(best.get("score", 0) * 100, 2)
 
+        # -------------------------------
+        # 2️⃣ ENRICH via Groq (TEXT ONLY)
+        # -------------------------------
+        groq_prompt = f"""
+Provide concise herbal information for the plant below.
+
+Plant Name: {plant_name}
+Scientific Name: {scientific_name}
+
+Return in this format:
+Description:
+Usage:
+Precautions:
+"""
+
+        payload = {
+            "model": "llama-3.1-8b-instant",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a knowledgeable herbal medicine assistant."
+                },
+                {
+                    "role": "user",
+                    "content": groq_prompt
+                }
+            ],
+            "temperature": 0.3
+        }
+
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        groq_res = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            json=payload,
+            headers=headers,
+            timeout=20
+        )
+
+        groq_res.raise_for_status()
+        ai_text = groq_res.json()["choices"][0]["message"]["content"]
+
+        # -------------------------------
+        # 3️⃣ PARSE AI RESPONSE
+        # -------------------------------
+        description = ""
+        usage = ""
+        precautions = ""
+
+        for line in ai_text.splitlines():
+            if line.lower().startswith("description"):
+                description = line.split(":", 1)[1].strip()
+            elif line.lower().startswith("usage"):
+                usage = line.split(":", 1)[1].strip()
+            elif line.lower().startswith("precautions"):
+                precautions = line.split(":", 1)[1].strip()
+
         return {
             "plant_name": plant_name,
-            "description": f"Scientific name: {scientific_name}",
-            "usage": "Use the AI assistant for medicinal details.",
+            "description": description or f"Scientific name: {scientific_name}",
+            "usage": usage or "No usage information available.",
             "confidence": confidence
         }
 
     except Exception as e:
-        print("PLANT IDENTIFY ERROR:", str(e))
+        print("IDENTIFY ERROR:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
