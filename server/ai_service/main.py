@@ -40,7 +40,7 @@ async def health():
 async def chat_with_ai(chat_request: schemas.ChatRequest):
     try:
         payload = {
-            "model": "llama3-8b-8192",  # ✅ FREE + STABLE
+            "model": "llama-3.1-8b-instant",  # ✅ FREE + STABLE
             "messages": [
                 {
                     "role": "system",
