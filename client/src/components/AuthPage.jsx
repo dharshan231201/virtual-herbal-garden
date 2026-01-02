@@ -132,24 +132,25 @@ function AuthPage({ onLogin }) {
           <>
             <button
               onClick={() => { setMode("register"); setMessage({type:"", text:""}); }}
-              className="w-full py-3 rounded-lg font-bold text-green-900 bg-[#c2ecc2] hover:bg-[#b2dfb2] transition-colors border border-green-300 shadow-sm"
+              // className="w-full py-3 rounded-lg font-bold text-green-900 bg-[#c2ecc2] hover:bg-[#b2dfb2] transition-colors border border-green-300 shadow-sm"
+              className="w-full py-3 rounded-lg font-bold text-white shadow-md transition-all active:scale-[0.98] bg-green-700 hover:bg-green-800"
             >
               Register New Account
             </button>
             <button
               onClick={() => { setMode("forgot"); setMessage({type:"", text:""}); }}
-              className="w-full py-3 rounded-lg font-bold text-green-900 bg-[#c2ecc2] hover:bg-[#b2dfb2] transition-colors border border-green-300 shadow-sm"
+              className="w-full py-3 rounded-lg font-bold text-white shadow-md transition-all active:scale-[0.98] bg-green-700 hover:bg-green-800"
             >
               Forgot Password?
             </button>
           </>
         ) : (
-          <button
-            onClick={() => { setMode("login"); setMessage({type:"", text:""}); }}
-            className="w-full py-2 rounded-lg font-semibold text-green-800 bg-transparent hover:bg-green-50 transition-colors"
-          >
-            ← Back to Login
-          </button>
+          // <button
+          //   onClick={() => { setMode("login"); setMessage({type:"", text:""}); }}
+          //   className="w-full py-2 rounded-lg font-semibold text-green-800 bg-transparent hover:bg-green-50 transition-colors"
+          // >
+          //   ← Back to Login
+          // </button>
         )}
       </div>
     </div>
