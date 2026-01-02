@@ -118,15 +118,6 @@ function ResetPassword() {
           {loading ? "Processing..." : "Update Password"}
         </button>
       </form>
-
-      {/* <div className="mt-8 text-center border-t border-gray-100 pt-6">
-        <button
-          onClick={() => navigate("/login")}
-          className="flex items-center justify-center w-full py-2 text-green-800 font-semibold hover:underline gap-2"
-        >
-          <ArrowLeft size={18} /> Back to Login
-        </button>
-      </div> */}
     </div>
   );
 }
