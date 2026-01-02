@@ -1,4 +1,3 @@
-// /client/src/components/IdentifyPlant.jsx
 import React, { useState } from "react";
 import axios from "axios";
 
@@ -21,6 +20,13 @@ function IdentifyPlant() {
     setError(null);
   };
 
+  const handleRemove = () => {
+    setImage(null);
+    setPreview("");
+    setResult(null);
+    setError(null);
+  };
+
   const handleIdentify = async () => {
     if (!image) {
       setError("Please select an image first.");
@@ -39,7 +45,6 @@ function IdentifyPlant() {
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
-
       setResult(res.data);
     } catch (err) {
       setError(err.response?.data?.detail || "Identification failed");
@@ -49,51 +54,61 @@ function IdentifyPlant() {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white text-gray-800 rounded-xl shadow-lg">
-      <h2 className="text-2xl font-bold mb-4 text-center">
-        Identify Plant from Image
+    <div className="max-w-xl mx-auto p-6 bg-white text-gray-800 rounded-xl shadow-lg border border-gray-100">
+      <h2 className="text-2xl font-bold mb-6 text-center text-green-800">
+        Identify Plant
       </h2>
 
-      {/* ✅ IMAGE UPLOAD */}
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="block w-full mb-4"
-      />
-
-      {/* ✅ IMAGE PREVIEW */}
-      {preview && (
-        <img
-          src={preview}
-          alt="Preview"
-          className="w-full max-h-64 object-contain mb-4 rounded"
-        />
+      {/* ✅ FILE INPUT (Hidden if image selected) */}
+      {!preview && (
+        <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors mb-4">
+          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+            <p className="mb-2 text-sm text-gray-500">
+              <span className="font-semibold">Click to upload</span> or drag and drop
+            </p>
+            <p className="text-xs text-gray-400">PNG, JPG or JPEG</p>
+          </div>
+          <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+        </label>
       )}
 
-      {/* ✅ BUTTON */}
+      {/* ✅ IMAGE PREVIEW & REMOVE */}
+      {preview && (
+        <div className="relative mb-4">
+          <img
+            src={preview}
+            alt="Preview"
+            className="w-full max-h-72 object-cover rounded-lg shadow-sm"
+          />
+          <button
+            onClick={handleRemove}
+            className="absolute top-2 right-2 bg-white/80 hover:bg-white text-red-600 p-2 rounded-full shadow transition-all"
+          >
+            {/* Simple X Icon */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* ✅ IDENTIFY BUTTON */}
       <button
         onClick={handleIdentify}
-        disabled={loading}
-        className="w-full bg-green-600 text-white py-3 rounded font-semibold hover:bg-green-700 disabled:opacity-50"
+        disabled={loading || !image}
+        className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors shadow-md"
       >
-        {loading ? "Identifying..." : "Identify Plant"}
+        {loading ? "Analyzing..." : "Identify Plant"}
       </button>
 
-      {/* ✅ ERROR */}
-      {error && (
-        <p className="text-red-600 text-center mt-4">{error}</p>
-      )}
-
-      {/* ✅ RESULT */}
+      {/* ✅ ERROR & RESULTS (Stay the same) */}
+      {error && <p className="text-red-600 text-center mt-4 bg-red-50 p-2 rounded">{error}</p>}
+      
       {result && (
-        <div className="mt-6 bg-green-50 p-4 rounded">
-          <p><strong>Plant:</strong> {result.plant_name}</p>
-          <p><strong>Description:</strong> {result.description}</p>
-          <p><strong>Usage:</strong> {result.usage}</p>
-          {result.confidence !== null && (
-            <p><strong>Confidence:</strong> {result.confidence}%</p>
-          )}
+        <div className="mt-6 bg-green-50 p-6 rounded-lg border border-green-100">
+          <h3 className="text-lg font-bold text-green-900 mb-2">{result.plant_name}</h3>
+          <p className="text-sm text-gray-700 mb-2">{result.description}</p>
+          <p className="text-sm italic text-gray-600"><strong>Usage:</strong> {result.usage}</p>
         </div>
       )}
     </div>
