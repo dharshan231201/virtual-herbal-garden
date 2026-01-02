@@ -75,7 +75,7 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
       const res = await axios.post(`${AI_API}/ai/chat`, { message: prompts[queryType] });
       setAiResponse(res.data.response);
     } catch (err) {
-      setAiError("Failed to get AI response. Please check if AI Service is running.");
+      setAiError("Failed to get AI response.");
     } finally {
       setAiLoading(false);
     }
@@ -132,15 +132,17 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
           ))}
         </div>
 
-        {aiLoading && <p className="text-green-600 font-medium animate-pulse">🌿 AI is thinking...</p>}
-        {aiError && <p className="text-red-600 italic bg-red-50 p-3 rounded-lg border border-red-100">{aiError}</p>}
+        {aiLoading && <p className="text-green-600 font-medium animate-pulse mb-4">🌿 AI is thinking...</p>}
+        {aiError && <p className="text-red-600 italic bg-red-50 p-3 rounded-lg border border-red-100 mb-4">{aiError}</p>}
         
         {aiResponse && (
           <div className="bg-emerald-50/50 p-6 rounded-2xl border border-emerald-100 shadow-inner">
             <div className="prose prose-green max-w-none 
-                            prose-headings:text-green-900 prose-headings:font-bold
-                            prose-p:text-gray-800 prose-p:leading-relaxed
-                            prose-strong:text-green-800 prose-li:text-gray-800">
+                            prose-headings:text-green-950 prose-headings:font-bold
+                            prose-p:text-green-950 prose-p:leading-relaxed
+                            prose-strong:text-green-900 
+                            prose-li:text-green-950
+                            prose-ul:list-disc">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{aiResponse}</ReactMarkdown>
             </div>
           </div>
