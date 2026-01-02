@@ -80,6 +80,7 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
     setAiLoading(true);
     setAiError(null);
     setActiveQuery(queryType);
+    setAiResponse(""); // Clear previous text for better UX
 
     const prompts = {
       combinations: `For the plant "${plant.common_name}", explain its common uses when combined with other herbs.`,
@@ -88,7 +89,7 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
     };
 
     try {
-      const res = await axios.post(`${AI_API}/chat`, {
+      const res = await axios.post(`${AI_API}/ai/chat`, {
         message: prompts[queryType],
       });
       setAiResponse(res.data.response);
@@ -179,7 +180,6 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
             </button>
           ))}
         </div>
-
         {aiLoading && <p>Thinking...</p>}
         {aiError && <p className="text-red-600">{aiError}</p>}
 
