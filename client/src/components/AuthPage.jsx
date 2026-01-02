@@ -32,11 +32,7 @@ function AuthPage({ onLogin }) {
 
     try {
       const endpoint =
-        mode === "login"
-          ? "/auth/login"
-          : mode === "register"
-          ? "/auth/register"
-          : "/auth/forgot-password";
+        mode === "login" ? "/auth/login" : mode === "register" ? "/auth/register" : "/auth/forgot-password";
 
       const res = await axios.post(`${AUTH_URL}${endpoint}`, formData);
 
@@ -45,23 +41,19 @@ function AuthPage({ onLogin }) {
         navigate("/");
       } else if (mode === "forgot") {
         setCooldown(60);
-        setMessage({
-          type: "success",
-          text: "Reset code sent! Redirecting you to the update page...",
-        });
-        // REDIRECT TO RESET PAGE AFTER 2 SECONDS
+        setMessage({ type: "success", text: "Reset code sent! Redirecting..." });
         setTimeout(() => navigate("/reset-password"), 2000);
       } else {
         setMessage({ type: "success", text: "Account created! Please sign in." });
         setMode("login");
       }
     } catch (err) {
-      setMessage({
-        type: "error",
-        text: err.response?.data?.detail || "Request failed.",
-      });
+      setMessage({ type: "error", text: err.response?.data?.detail || "Request failed." });
     }
   };
+
+  // Shared button style variable for perfect consistency
+  const primaryButtonStyle = "w-full py-3 rounded-lg font-bold text-white shadow-md transition-all active:scale-[0.98] bg-green-700 hover:bg-green-800";
 
   return (
     <div className="max-w-md mx-auto my-12 p-8 rounded-xl border border-green-300 shadow-lg bg-white">
@@ -109,7 +101,6 @@ function AuthPage({ onLogin }) {
             <button
               type="button" onClick={() => setShowPassword(!showPassword)}
               className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent border-none p-0 text-green-600 hover:text-green-800 focus:outline-none"
-              style={{ background: 'none', border: 'none' }}
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -119,38 +110,36 @@ function AuthPage({ onLogin }) {
         <button
           type="submit"
           disabled={mode === "forgot" && cooldown > 0}
-          className={`w-full py-3 rounded-lg font-bold text-white shadow-md transition-all active:scale-[0.98] ${
-            cooldown > 0 ? "bg-green-300 cursor-not-allowed" : "bg-green-700 hover:bg-green-800"
-          }`}
+          className={`${primaryButtonStyle} ${cooldown > 0 ? "bg-green-300 cursor-not-allowed shadow-none" : ""}`}
         >
           {mode === "login" ? "Sign In" : mode === "register" ? "Create Account" : "Send Reset Code"}
         </button>
       </form>
 
+      {/* MODE SWITCH BUTTONS - Now matching the Sign In style */}
       <div className="mt-8 space-y-3">
         {mode === "login" ? (
           <>
             <button
               onClick={() => { setMode("register"); setMessage({type:"", text:""}); }}
-              // className="w-full py-3 rounded-lg font-bold text-green-900 bg-[#c2ecc2] hover:bg-[#b2dfb2] transition-colors border border-green-300 shadow-sm"
-              className="w-full py-3 rounded-lg font-bold text-white shadow-md transition-all active:scale-[0.98] bg-green-700 hover:bg-green-800"
+              className={primaryButtonStyle}
             >
               Register New Account
             </button>
             <button
               onClick={() => { setMode("forgot"); setMessage({type:"", text:""}); }}
-              className="w-full py-3 rounded-lg font-bold text-white shadow-md transition-all active:scale-[0.98] bg-green-700 hover:bg-green-800"
+              className={primaryButtonStyle}
             >
               Forgot Password?
             </button>
           </>
         ) : (
-          // <button
-          //   onClick={() => { setMode("login"); setMessage({type:"", text:""}); }}
-          //   className="w-full py-2 rounded-lg font-semibold text-green-800 bg-transparent hover:bg-green-50 transition-colors"
-          // >
-          //   ← Back to Login
-          // </button>
+          <button
+            onClick={() => { setMode("login"); setMessage({type:"", text:""}); }}
+            className="w-full py-2 rounded-lg font-semibold text-green-800 bg-transparent hover:bg-green-50 transition-colors"
+          >
+            ← Back to Login
+          </button>
         )}
       </div>
     </div>
