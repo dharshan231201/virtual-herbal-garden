@@ -52,7 +52,6 @@ function AuthPage({ onLogin }) {
     }
   };
 
-  // The style you wanted for all buttons
   const buttonBaseClass = "py-3 rounded-lg font-bold text-white shadow-md transition-all active:scale-[0.98] bg-green-700 hover:bg-green-800";
 
   return (
@@ -107,7 +106,6 @@ function AuthPage({ onLogin }) {
           </div>
         )}
 
-        {/* MAIN SIGN IN BUTTON */}
         <button
           type="submit"
           disabled={mode === "forgot" && cooldown > 0}
@@ -117,32 +115,23 @@ function AuthPage({ onLogin }) {
         </button>
       </form>
 
-      {/* BOTTOM BUTTONS - PLACED SIDE BY SIDE LIKE THE IMAGE */}
-      <div className="mt-8">
-        {mode === "login" ? (
-          <div className="flex justify-center gap-4">
-            <button
-              onClick={() => { setMode("register"); setMessage({type:"", text:""}); }}
-              className={`flex-1 ${buttonBaseClass} px-2 py-2.5 text-sm`}
-            >
-              Sign Up
-            </button>
-            <button
-              onClick={() => { setMode("forgot"); setMessage({type:"", text:""}); }}
-              className={`flex-1 ${buttonBaseClass} px-2 py-2.5 text-sm`}
-            >
-              Forgot Password?
-            </button>
-          </div>
-        ) : (
+      {/* MODIFIED BOTTOM SECTION: Removed "Back to Login" */}
+      {mode === "login" && (
+        <div className="mt-8 flex justify-center gap-4">
           <button
-            onClick={() => { setMode("login"); setMessage({type:"", text:""}); }}
-            className="w-full py-2 font-bold text-green-800 hover:underline"
+            onClick={() => { setMode("register"); setMessage({type:"", text:""}); }}
+            className={`flex-1 ${buttonBaseClass} px-2 py-2.5 text-sm`}
           >
-            ← Back to Login
+            Sign Up
           </button>
-        )}
-      </div>
+          <button
+            onClick={() => { setMode("forgot"); setMessage({type:"", text:""}); }}
+            className={`flex-1 ${buttonBaseClass} px-2 py-2.5 text-sm`}
+          >
+            Forgot Password?
+          </button>
+        </div>
+      )}
     </div>
   );
 }
