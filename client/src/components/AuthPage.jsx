@@ -47,8 +47,10 @@ function AuthPage({ onLogin }) {
         setCooldown(60);
         setMessage({
           type: "success",
-          text: "If the account exists, a reset email has been sent.",
+          text: "Reset code sent! Redirecting you to the update page...",
         });
+        // REDIRECT TO RESET PAGE AFTER 2 SECONDS
+        setTimeout(() => navigate("/reset-password"), 2000);
       } else {
         setMessage({ type: "success", text: "Account created! Please sign in." });
         setMode("login");
@@ -114,7 +116,6 @@ function AuthPage({ onLogin }) {
           </div>
         )}
 
-        {/* --- Unified Primary Action Button --- */}
         <button
           type="submit"
           disabled={mode === "forgot" && cooldown > 0}
@@ -122,23 +123,22 @@ function AuthPage({ onLogin }) {
             cooldown > 0 ? "bg-green-300 cursor-not-allowed" : "bg-green-700 hover:bg-green-800"
           }`}
         >
-          {mode === "login" ? "Sign In" : mode === "register" ? "Create Account" : "Send Reset Link"}
+          {mode === "login" ? "Sign In" : mode === "register" ? "Create Account" : "Send Reset Code"}
         </button>
       </form>
 
-      {/* --- Unified Style for Mode Switching --- */}
       <div className="mt-8 space-y-3">
         {mode === "login" ? (
           <>
             <button
               onClick={() => { setMode("register"); setMessage({type:"", text:""}); }}
-              className="w-full py-3 rounded-lg font-bold text-green-900 bg-[#c2ecc2] hover:bg-[#b2dfb2] transition-colors border border-green-300"
+              className="w-full py-3 rounded-lg font-bold text-green-900 bg-[#c2ecc2] hover:bg-[#b2dfb2] transition-colors border border-green-300 shadow-sm"
             >
               Register New Account
             </button>
             <button
               onClick={() => { setMode("forgot"); setMessage({type:"", text:""}); }}
-              className="w-full py-3 rounded-lg font-bold text-green-900 bg-[#c2ecc2] hover:bg-[#b2dfb2] transition-colors border border-green-300"
+              className="w-full py-3 rounded-lg font-bold text-green-900 bg-[#c2ecc2] hover:bg-[#b2dfb2] transition-colors border border-green-300 shadow-sm"
             >
               Forgot Password?
             </button>
