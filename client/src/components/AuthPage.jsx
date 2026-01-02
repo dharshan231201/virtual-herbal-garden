@@ -20,7 +20,6 @@ function AuthPage({ onLogin }) {
 
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  /* ⏱ cooldown timer */
   useEffect(() => {
     if (cooldown <= 0) return;
     const t = setInterval(() => setCooldown((c) => c - 1), 1000);
@@ -66,8 +65,8 @@ function AuthPage({ onLogin }) {
   };
 
   return (
-    <div className="max-w-md mx-auto my-12 p-8 bg-white rounded-xl shadow-xl border border-green-200">
-      <h2 className="text-3xl font-bold text-center text-green-800 mb-6">
+    <div className="max-w-md mx-auto my-12 p-8 rounded-xl border border-green-300">
+      <h2 className="text-3xl font-bold text-center text-green-900 mb-6">
         {mode === "login"
           ? "Login"
           : mode === "register"
@@ -75,7 +74,6 @@ function AuthPage({ onLogin }) {
           : "Forgot Password"}
       </h2>
 
-      {/* MESSAGE */}
       {message.text && (
         <div
           className={`mb-4 p-3 rounded text-center font-medium ${
@@ -88,7 +86,6 @@ function AuthPage({ onLogin }) {
         </div>
       )}
 
-      {/* FORM */}
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* EMAIL */}
         <input
@@ -99,41 +96,46 @@ function AuthPage({ onLogin }) {
           onChange={(e) =>
             setFormData({ ...formData, email: e.target.value })
           }
-          className="w-full p-3 rounded-lg bg-[#ecf9ec] text-green-900
-                     placeholder-green-700 border border-green-300
-                     focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="
+            w-full px-4 py-3 rounded-lg
+            bg-[#ecf9ec]
+            text-green-900
+            placeholder-green-700
+            border border-green-300
+            focus:outline-none focus:ring-2 focus:ring-green-600
+          "
         />
 
         {/* PASSWORD */}
         {mode !== "forgot" && (
-          <div className="relative">
+          <div className="flex items-center bg-[#ecf9ec] border border-green-300 rounded-lg px-3">
             <input
               type={showPassword ? "text" : "password"}
-              required
               placeholder="Password"
+              required
+              className="
+                flex-1 py-3 bg-transparent
+                text-green-900 placeholder-green-700
+                focus:outline-none
+              "
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
               }
-              className="w-full p-3 pr-12 rounded-lg bg-[#ecf9ec] text-green-900
-                         placeholder-green-700 border border-green-300
-                         focus:outline-none focus:ring-2 focus:ring-green-500"
             />
-
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute inset-y-0 right-3 flex items-center text-green-700"
+              className="text-green-700 hover:text-green-900"
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
         )}
 
-        {/* BUTTON */}
         <button
           type="submit"
           disabled={mode === "forgot" && cooldown > 0}
-          className={`w-full py-3 rounded-lg font-semibold text-white transition ${
+          className={`w-full py-3 rounded-lg font-semibold text-white ${
             cooldown > 0
               ? "bg-green-300 cursor-not-allowed"
               : "bg-green-700 hover:bg-green-800"
@@ -149,7 +151,6 @@ function AuthPage({ onLogin }) {
         </button>
       </form>
 
-      {/* RESET LINK */}
       {mode === "forgot" && emailSent && (
         <button
           onClick={() => navigate("/reset-password")}
@@ -159,9 +160,8 @@ function AuthPage({ onLogin }) {
         </button>
       )}
 
-      {/* FOOTER */}
       <div className="mt-6 text-center text-sm">
-        {mode === "login" && (
+        {mode === "login" ? (
           <>
             <button
               onClick={() => setMode("register")}
@@ -176,9 +176,7 @@ function AuthPage({ onLogin }) {
               Forgot Password?
             </button>
           </>
-        )}
-
-        {mode !== "login" && (
+        ) : (
           <button
             onClick={() => setMode("login")}
             className="text-green-700 hover:underline"
