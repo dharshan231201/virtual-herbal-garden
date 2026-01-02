@@ -25,7 +25,6 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
   const dbUser = JSON.parse(localStorage.getItem("user") || "null");
   const isBookmarked = userBookmarks.has(plantIdNum);
 
-  /* ================= FETCH PLANT ================= */
   const fetchPlantDetail = useCallback(async () => {
     try {
       setLoading(true);
@@ -41,7 +40,6 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
 
   useEffect(() => { fetchPlantDetail(); }, [fetchPlantDetail]);
 
-  /* ================= BOOKMARK ================= */
   const handleBookmarkToggle = async () => {
     if (!token || !dbUser) {
       alert("Please log in to bookmark plants.");
@@ -60,7 +58,6 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
     }
   };
 
-  /* ================= AI EXPERT LOGIC ================= */
   const askAIAboutPlant = async (queryType) => {
     if (!plant?.common_name) return;
     setAiLoading(true);
@@ -129,7 +126,7 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
             <button
               key={type}
               onClick={() => askAIAboutPlant(type)}
-              className={`px-5 py-2 rounded-full border text-sm font-semibold transition-all shadow-sm ${
+              className={`px-5 py-2 rounded-full border text-sm font-bold transition-all shadow-sm ${
                 activeQuery === type 
                   ? "bg-green-700 text-white border-green-700 ring-2 ring-green-200" 
                   : "bg-white text-green-700 border-green-200 hover:bg-green-50"
@@ -142,19 +139,19 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
 
         {/* Loading State */}
         {aiLoading && (
-          <div className="flex items-center gap-2 text-green-600 font-medium animate-pulse mb-4">
-            <span>🌿</span> Identifying herbal properties...
+          <div className="flex items-center gap-2 text-green-600 font-bold animate-pulse mb-4">
+            <span>🌿</span> Analyzing herbal data...
           </div>
         )}
 
-        {/* AI Output Container - FIXED VISIBILITY */}
+        {/* AI Output Container - FORCED DARK GREEN TEXT */}
         {aiResponse && (
-          <div className="bg-emerald-50/50 p-8 rounded-2xl border border-emerald-100 shadow-inner">
+          <div className="bg-emerald-50 p-8 rounded-2xl border border-emerald-100 shadow-inner">
             <div className="prose prose-green max-w-none 
-                            prose-headings:text-green-950 prose-headings:font-bold
-                            prose-p:text-green-950 prose-p:leading-relaxed prose-p:font-medium
-                            prose-li:text-green-950 prose-li:font-medium
-                            prose-strong:text-green-900 prose-strong:font-bold">
+                            prose-headings:text-green-950 prose-headings:font-black
+                            prose-p:text-green-950 prose-p:leading-relaxed prose-p:font-bold
+                            prose-li:text-green-950 prose-li:font-bold
+                            prose-strong:text-green-900 prose-strong:font-black">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{aiResponse}</ReactMarkdown>
             </div>
           </div>
