@@ -96,46 +96,46 @@ function AuthPage({ onLogin }) {
           onChange={(e) =>
             setFormData({ ...formData, email: e.target.value })
           }
-          className="
-            w-full px-4 py-3 rounded-lg
-            bg-[#ecf9ec]
-            text-green-900
-            placeholder-green-700
-            border border-green-300
-            focus:outline-none focus:ring-2 focus:ring-green-600
-          "
+          className="w-full px-4 py-3 rounded-lg bg-[#ecf9ec]
+                     text-green-900 placeholder-green-700
+                     border border-green-300
+                     focus:outline-none focus:ring-2 focus:ring-green-600"
         />
 
         {/* PASSWORD */}
         {mode !== "forgot" && (
-          <div className="flex items-center bg-[#ecf9ec] border border-green-300 rounded-lg px-3">
+          <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="Password"
               required
-              className="
-                flex-1 py-3 bg-transparent
-                text-green-900 placeholder-green-700
-                focus:outline-none
-              "
+              placeholder="Password"
+              className="w-full px-4 py-3 pr-12 rounded-lg bg-[#ecf9ec]
+                         text-green-900 placeholder-green-700
+                         border border-green-300
+                         focus:outline-none focus:ring-2 focus:ring-green-600"
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
               }
             />
+
+            {/* 👁 Eye icon — NO background */}
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="text-green-700 hover:text-green-900"
+              className="absolute right-4 top-1/2 -translate-y-1/2
+                         text-green-700 hover:text-green-900
+                         focus:outline-none"
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
         )}
 
+        {/* PRIMARY BUTTON */}
         <button
           type="submit"
           disabled={mode === "forgot" && cooldown > 0}
-          className={`w-full py-3 rounded-lg font-semibold text-white ${
+          className={`w-full py-3 rounded-lg font-semibold text-white transition ${
             cooldown > 0
               ? "bg-green-300 cursor-not-allowed"
               : "bg-green-700 hover:bg-green-800"
@@ -151,35 +151,36 @@ function AuthPage({ onLogin }) {
         </button>
       </form>
 
-      {mode === "forgot" && emailSent && (
-        <button
-          onClick={() => navigate("/reset-password")}
-          className="mt-4 w-full bg-[#c2ecc2] text-green-900 py-2 rounded-lg font-semibold hover:bg-[#ecf9ec]"
-        >
-          I have a reset code → Reset Password
-        </button>
-      )}
-
-      <div className="mt-6 text-center text-sm">
-        {mode === "login" ? (
+      {/* SECONDARY ACTION BUTTONS */}
+      <div className="mt-6 flex justify-center gap-4">
+        {mode === "login" && (
           <>
             <button
               onClick={() => setMode("register")}
-              className="text-green-700 hover:underline mr-4"
+              className="px-6 py-2 rounded-lg font-semibold
+                         bg-[#c2ecc2] text-green-900
+                         hover:bg-[#ecf9ec]"
             >
               Sign Up
             </button>
+
             <button
               onClick={() => setMode("forgot")}
-              className="text-green-700 hover:underline"
+              className="px-6 py-2 rounded-lg font-semibold
+                         bg-[#c2ecc2] text-green-900
+                         hover:bg-[#ecf9ec]"
             >
               Forgot Password?
             </button>
           </>
-        ) : (
+        )}
+
+        {mode !== "login" && (
           <button
             onClick={() => setMode("login")}
-            className="text-green-700 hover:underline"
+            className="px-6 py-2 rounded-lg font-semibold
+                       bg-[#c2ecc2] text-green-900
+                       hover:bg-[#ecf9ec]"
           >
             Back to Login
           </button>
