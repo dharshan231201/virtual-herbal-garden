@@ -3,6 +3,7 @@
 Virtual Herbal Garden is a full-stack 3-tier web application that helps users explore medicinal plants, identify plants from images, and learn about herbal uses with the help of AI.  
 The project uses **React (Vite)** on the frontend and **FastAPI microservices** on the backend, with AI integrations for plant identification and herbal guidance.
 
+https://virtual-herbal-garden-r1uw.onrender.com/
 ---
 
 ##  Architecture
