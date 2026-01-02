@@ -50,5 +50,3 @@ class ChatResponse(BaseModel):
 
 class PlantIdentificationResponse(BaseModel):
     plant_name: str
-    description: str
-    usage: str

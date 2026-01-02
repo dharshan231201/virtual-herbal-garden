@@ -109,10 +109,7 @@ async def identify_plant(image: UploadFile = File(...)):
 
         if not results:
             return {
-                "plant_name": "Unknown Plant",
-                "description": "Could not identify the plant.",
-                "usage": "Try asking the AI assistant for general herbal guidance.",
-                "confidence": None
+                "plant_name": "Unknown Plant"
             }
 
         best = results[0]
@@ -123,96 +120,8 @@ async def identify_plant(image: UploadFile = File(...)):
 
         plant_name = common_names[0] if common_names else scientific_name
 
-        # --------------------------
-        # 2️⃣ Ask Groq for details
-        # --------------------------
-        prompt = (
-            f"Provide information about the plant '{plant_name}'.\n\n"
-            "Format exactly as:\n"
-            "Description:\n"
-            "- short paragraph\n\n"
-            "Usage:\n"
-            "- traditional or common uses\n\n"
-            "Precautions:\n"
-            "- safety warnings\n"
-        )
-
-        groq_payload = {
-            "model": "llama-3.1-8b-instant",
-            "messages": [
-                {"role": "system", "content": "You are a herbal medicine expert."},
-                {"role": "user", "content": prompt}
-            ],
-            "temperature": 0.4
-        }
-
-        headers = {
-            "Authorization": f"Bearer {GROQ_API_KEY}",
-            "Content-Type": "application/json"
-        }
-
-        groq_res = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            json=groq_payload,
-            headers=headers,
-            timeout=20
-        )
-
-        groq_res.raise_for_status()
-        ai_text = groq_res.json()["choices"][0]["message"]["content"]
-
-        # --------------------------
-        # 3️⃣ ROBUST PARSING (FIX)
-        # --------------------------
-        description_lines = []
-        usage_lines = []
-        precaution_lines = []
-
-        current_section = None
-
-        for line in ai_text.splitlines():
-            clean = line.strip()
-            if not clean:
-                continue
-
-            lower = clean.lower()
-
-            if lower.startswith("description"):
-                current_section = "description"
-                continue
-            elif lower.startswith("usage"):
-                current_section = "usage"
-                continue
-            elif lower.startswith("precautions"):
-                current_section = "precautions"
-                continue
-
-            if current_section == "description":
-                description_lines.append(clean)
-            elif current_section == "usage":
-                usage_lines.append(clean)
-            elif current_section == "precautions":
-                precaution_lines.append(clean)
-
-        description = " ".join(description_lines).strip()
-        usage = " ".join(usage_lines).strip()
-        precautions = " ".join(precaution_lines).strip()
-
-        if not description:
-            description = "General botanical information is limited for this plant."
-
-        if not usage:
-            usage = "No well-documented traditional usage available."
-
-        final_usage = usage
-        if precautions:
-            final_usage += f"\n\n⚠️ Precautions: {precautions}"
-
         return {
             "plant_name": plant_name
-            # "description": description,
-            # "usage": final_usage,
-            # "confidence": None
         }
 
     except Exception as e:
