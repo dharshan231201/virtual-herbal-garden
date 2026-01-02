@@ -52,11 +52,12 @@ function AuthPage({ onLogin }) {
     }
   };
 
-  // Shared button style variable for perfect consistency
-  const primaryButtonStyle = "w-full py-3 rounded-lg font-bold text-white shadow-md transition-all active:scale-[0.98] bg-green-700 hover:bg-green-800";
+  // Common styles
+  const primaryBtn = "w-full py-3 rounded-lg font-bold text-white shadow-md transition-all active:scale-[0.95] bg-green-700 hover:bg-green-800";
+  const inlineBtn = "flex-1 py-2 px-2 rounded-lg font-bold text-white text-xs shadow-md transition-all active:scale-[0.95] bg-green-700 hover:bg-green-800 text-center";
 
   return (
-    <div className="max-w-md mx-auto my-12 p-8 rounded-xl border border-green-300 shadow-lg bg-white">
+    <div className="max-w-md mx-auto my-12 p-8 rounded-xl border border-green-300 shadow-lg bg-white font-sans">
       <h2 className="text-3xl font-bold text-center text-green-900 mb-8">
         {mode === "login" ? "Welcome Back" : mode === "register" ? "Join the Garden" : "Reset Password"}
       </h2>
@@ -87,7 +88,7 @@ function AuthPage({ onLogin }) {
 
         <input
           type="email" required placeholder="Email address" value={formData.email}
-          className="w-full px-4 py-3 rounded-lg bg-[#ecf9ec] text-green-900 border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-600"
+          className="w-full px-4 py-3 rounded-lg bg-[#ecf9ec] text-green-900 border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-600 font-sans"
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
         />
 
@@ -95,7 +96,7 @@ function AuthPage({ onLogin }) {
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"} required placeholder="Password"
-              className="w-full px-4 py-3 pr-12 rounded-lg bg-[#ecf9ec] text-green-900 border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-600"
+              className="w-full px-4 py-3 pr-12 rounded-lg bg-[#ecf9ec] text-green-900 border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-600 font-sans"
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             />
             <button
@@ -110,33 +111,33 @@ function AuthPage({ onLogin }) {
         <button
           type="submit"
           disabled={mode === "forgot" && cooldown > 0}
-          className={`${primaryButtonStyle} ${cooldown > 0 ? "bg-green-300 cursor-not-allowed shadow-none" : ""}`}
+          className={`${primaryBtn} ${cooldown > 0 ? "bg-green-300 cursor-not-allowed shadow-none" : ""}`}
         >
           {mode === "login" ? "Sign In" : mode === "register" ? "Create Account" : "Send Reset Code"}
         </button>
       </form>
 
-      {/* MODE SWITCH BUTTONS - Now matching the Sign In style */}
-      <div className="mt-8 space-y-3">
+      {/* SINGLE LINE MODE SWITCH BUTTONS */}
+      <div className="mt-8">
         {mode === "login" ? (
-          <>
+          <div className="flex gap-2">
             <button
               onClick={() => { setMode("register"); setMessage({type:"", text:""}); }}
-              className={primaryButtonStyle}
+              className={inlineBtn}
             >
-              Register New Account
+              New Account
             </button>
             <button
               onClick={() => { setMode("forgot"); setMessage({type:"", text:""}); }}
-              className={primaryButtonStyle}
+              className={inlineBtn}
             >
               Forgot Password?
             </button>
-          </>
+          </div>
         ) : (
           <button
             onClick={() => { setMode("login"); setMessage({type:"", text:""}); }}
-            className="w-full py-2 rounded-lg font-semibold text-green-800 bg-transparent hover:bg-green-50 transition-colors"
+            className="w-full py-2 rounded-lg font-semibold text-green-800 bg-transparent hover:bg-green-50 transition-colors text-center"
           >
             ← Back to Login
           </button>
