@@ -52,14 +52,13 @@ function AuthPage({ onLogin }) {
     }
   };
 
-  // Common styles
-  const primaryBtn = "w-full py-3 rounded-lg font-bold text-white shadow-md transition-all active:scale-[0.95] bg-green-700 hover:bg-green-800";
-  const inlineBtn = "flex-1 py-2 px-2 rounded-lg font-bold text-white text-xs shadow-md transition-all active:scale-[0.95] bg-green-700 hover:bg-green-800 text-center";
+  // The style you wanted for all buttons
+  const buttonBaseClass = "py-3 rounded-lg font-bold text-white shadow-md transition-all active:scale-[0.98] bg-green-700 hover:bg-green-800";
 
   return (
-    <div className="max-w-md mx-auto my-12 p-8 rounded-xl border border-green-300 shadow-lg bg-white font-sans">
-      <h2 className="text-3xl font-bold text-center text-green-900 mb-8">
-        {mode === "login" ? "Welcome Back" : mode === "register" ? "Join the Garden" : "Reset Password"}
+    <div className="max-w-md mx-auto my-12 p-10 rounded-2xl border border-green-300 shadow-lg bg-white">
+      <h2 className="text-4xl font-bold text-center text-green-900 mb-10 uppercase tracking-tight">
+        {mode === "login" ? "Login" : mode === "register" ? "Sign Up" : "Reset"}
       </h2>
 
       {message.text && (
@@ -70,17 +69,17 @@ function AuthPage({ onLogin }) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {mode === "register" && (
           <div className="flex gap-2">
             <input
               type="text" placeholder="First Name" required
-              className="w-1/2 px-4 py-3 rounded-lg bg-[#ecf9ec] text-green-900 border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-600"
+              className="w-1/2 px-4 py-4 rounded-xl bg-[#ecf9ec] text-green-900 border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-600"
               onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
             />
             <input
               type="text" placeholder="Last Name"
-              className="w-1/2 px-4 py-3 rounded-lg bg-[#ecf9ec] text-green-900 border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-600"
+              className="w-1/2 px-4 py-4 rounded-xl bg-[#ecf9ec] text-green-900 border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-600"
               onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
             />
           </div>
@@ -88,7 +87,7 @@ function AuthPage({ onLogin }) {
 
         <input
           type="email" required placeholder="Email address" value={formData.email}
-          className="w-full px-4 py-3 rounded-lg bg-[#ecf9ec] text-green-900 border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-600 font-sans"
+          className="w-full px-4 py-4 rounded-xl bg-[#ecf9ec] text-green-900 border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-600"
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
         />
 
@@ -96,40 +95,41 @@ function AuthPage({ onLogin }) {
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"} required placeholder="Password"
-              className="w-full px-4 py-3 pr-12 rounded-lg bg-[#ecf9ec] text-green-900 border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-600 font-sans"
+              className="w-full px-4 py-4 pr-14 rounded-xl bg-[#ecf9ec] text-green-900 border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-600"
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             />
             <button
               type="button" onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-transparent border-none p-0 text-green-600 hover:text-green-800 focus:outline-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/80 p-2 rounded-lg text-green-500 hover:text-green-300"
             >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              {showPassword ? <EyeOff size={24} /> : <Eye size={24} />}
             </button>
           </div>
         )}
 
+        {/* MAIN SIGN IN BUTTON */}
         <button
           type="submit"
           disabled={mode === "forgot" && cooldown > 0}
-          className={`${primaryBtn} ${cooldown > 0 ? "bg-green-300 cursor-not-allowed shadow-none" : ""}`}
+          className={`w-full ${buttonBaseClass} ${cooldown > 0 ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           {mode === "login" ? "Sign In" : mode === "register" ? "Create Account" : "Send Reset Code"}
         </button>
       </form>
 
-      {/* SINGLE LINE MODE SWITCH BUTTONS */}
+      {/* BOTTOM BUTTONS - PLACED SIDE BY SIDE LIKE THE IMAGE */}
       <div className="mt-8">
         {mode === "login" ? (
-          <div className="flex gap-2">
+          <div className="flex justify-center gap-4">
             <button
               onClick={() => { setMode("register"); setMessage({type:"", text:""}); }}
-              className={inlineBtn}
+              className={`flex-1 ${buttonBaseClass} px-2 py-2.5 text-sm`}
             >
-              New Account
+              Sign Up
             </button>
             <button
               onClick={() => { setMode("forgot"); setMessage({type:"", text:""}); }}
-              className={inlineBtn}
+              className={`flex-1 ${buttonBaseClass} px-2 py-2.5 text-sm`}
             >
               Forgot Password?
             </button>
@@ -137,7 +137,7 @@ function AuthPage({ onLogin }) {
         ) : (
           <button
             onClick={() => { setMode("login"); setMessage({type:"", text:""}); }}
-            className="w-full py-2 rounded-lg font-semibold text-green-800 bg-transparent hover:bg-green-50 transition-colors text-center"
+            className="w-full py-2 font-bold text-green-800 hover:underline"
           >
             ← Back to Login
           </button>
