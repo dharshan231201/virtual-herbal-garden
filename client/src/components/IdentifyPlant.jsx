@@ -107,8 +107,8 @@ function IdentifyPlant() {
       {result && (
         <div className="mt-6 bg-green-50 p-6 rounded-lg border border-green-100">
           <h3 className="text-lg font-bold text-green-900 mb-2">{result.plant_name}</h3>
-          <p className="text-sm text-gray-700 mb-2">{result.description}</p>
-          <p className="text-sm italic text-gray-600"><strong>Usage:</strong> {result.usage}</p>
+          {/* <p className="text-sm text-gray-700 mb-2">{result.description}</p>
+          <p className="text-sm italic text-gray-600"><strong>Usage:</strong> {result.usage}</p> */}
         </div>
       )}
     </div>

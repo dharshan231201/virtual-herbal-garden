@@ -209,10 +209,10 @@ async def identify_plant(image: UploadFile = File(...)):
             final_usage += f"\n\n⚠️ Precautions: {precautions}"
 
         return {
-            "plant_name": plant_name,
-            "description": description,
-            "usage": final_usage,
-            "confidence": None
+            "plant_name": plant_name
+            # "description": description,
+            # "usage": final_usage,
+            # "confidence": None
         }
 
     except Exception as e:
