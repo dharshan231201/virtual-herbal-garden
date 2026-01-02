@@ -23,10 +23,8 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
 
   const token = localStorage.getItem("token");
   const dbUser = JSON.parse(localStorage.getItem("user") || "null");
-
   const isBookmarked = userBookmarks.has(plantIdNum);
 
-  /* ================= FETCH PLANT ================= */
   const fetchPlantDetail = useCallback(async () => {
     try {
       setLoading(true);
@@ -40,17 +38,13 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
     }
   }, [plantIdNum, PLANT_API]);
 
-  useEffect(() => {
-    fetchPlantDetail();
-  }, [fetchPlantDetail]);
+  useEffect(() => { fetchPlantDetail(); }, [fetchPlantDetail]);
 
-  /* ================= BOOKMARK ================= */
   const handleBookmarkToggle = async () => {
     if (!token || !dbUser) {
       alert("Please log in to bookmark plants.");
       return;
     }
-
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       if (isBookmarked) {
@@ -64,14 +58,12 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
     }
   };
 
-  /* ================= AI EXPERT LOGIC ================= */
   const askAIAboutPlant = async (queryType) => {
     if (!plant?.common_name) return;
-
     setAiLoading(true);
     setAiError(null);
     setActiveQuery(queryType);
-    setAiResponse(""); // Clear previous text for better UX
+    setAiResponse(""); 
 
     const prompts = {
       combinations: `For the plant "${plant.common_name}", explain its common uses when combined with other herbs.`,
@@ -80,10 +72,7 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
     };
 
     try {
-      // Corrected endpoint path: /ai/chat
-      const res = await axios.post(`${AI_API}/ai/chat`, {
-        message: prompts[queryType],
-      });
+      const res = await axios.post(`${AI_API}/ai/chat`, { message: prompts[queryType] });
       setAiResponse(res.data.response);
     } catch (err) {
       setAiError("Failed to get AI response. Please check if AI Service is running.");
@@ -96,7 +85,7 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
   if (error || !plant) return <div className="text-center text-red-600 py-10">{error || "Plant not found."}</div>;
 
   return (
-    <div className="bg-white rounded-lg shadow-xl p-8 my-8 border border-gray-200">
+    <div className="bg-white rounded-lg shadow-xl p-8 my-8 border border-gray-200 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6 pb-4 border-b">
         <h1 className="text-4xl font-extrabold text-green-800">
           {plant.common_name || plant.scientific_name}
@@ -125,15 +114,17 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
       </div>
 
       {/* ================= AI SECTION ================= */}
-      <div className="mt-8 pt-6 border-t">
-        <h2 className="text-2xl font-bold mb-4">AI Expert Insights</h2>
+      <div className="mt-8 pt-6 border-t border-gray-100">
+        <h2 className="text-2xl font-bold mb-4 text-green-900">AI Expert Insights</h2>
         <div className="flex gap-3 mb-6 flex-wrap">
           {["combinations", "allergies", "allergenic_mixtures"].map((type) => (
             <button
               key={type}
               onClick={() => askAIAboutPlant(type)}
-              className={`px-4 py-2 rounded-full border transition-colors ${
-                activeQuery === type ? "bg-green-700 text-white" : "bg-green-50 text-green-700 hover:bg-green-100"
+              className={`px-5 py-2 rounded-full border transition-all shadow-sm font-semibold ${
+                activeQuery === type 
+                  ? "bg-green-700 text-white border-green-700" 
+                  : "bg-green-50 text-green-700 border-green-100 hover:bg-green-100"
               }`}
             >
               {type.replace("_", " ").toUpperCase()}
@@ -142,10 +133,16 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
         </div>
 
         {aiLoading && <p className="text-green-600 font-medium animate-pulse">🌿 AI is thinking...</p>}
-        {aiError && <p className="text-red-600 italic">{aiError}</p>}
+        {aiError && <p className="text-red-600 italic bg-red-50 p-3 rounded-lg border border-red-100">{aiError}</p>}
+        
         {aiResponse && (
-          <div className="bg-gray-50 p-6 rounded-lg prose max-w-none border border-gray-100">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{aiResponse}</ReactMarkdown>
+          <div className="bg-emerald-50/50 p-6 rounded-2xl border border-emerald-100 shadow-inner">
+            <div className="prose prose-green max-w-none 
+                            prose-headings:text-green-900 prose-headings:font-bold
+                            prose-p:text-gray-800 prose-p:leading-relaxed
+                            prose-strong:text-green-800 prose-li:text-gray-800">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{aiResponse}</ReactMarkdown>
+            </div>
           </div>
         )}
       </div>
