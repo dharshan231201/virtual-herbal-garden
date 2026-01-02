@@ -53,27 +53,18 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
 
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
-
       if (isBookmarked) {
-        await axios.delete(
-          `${PLANT_API}/bookmarks/${dbUser.email}/${plantIdNum}`,
-          config
-        );
+        await axios.delete(`${PLANT_API}/bookmarks/${dbUser.email}/${plantIdNum}`, config);
       } else {
-        await axios.post(
-          `${PLANT_API}/bookmarks/`,
-          { email: dbUser.email, plant_id: plantIdNum },
-          config
-        );
+        await axios.post(`${PLANT_API}/bookmarks/`, { email: dbUser.email, plant_id: plantIdNum }, config);
       }
-
       onBookmarkToggled?.(plantIdNum, isBookmarked);
     } catch (err) {
       alert(err.response?.data?.detail || "Failed to update bookmark.");
     }
   };
 
-  /* ================= AI ================= */
+  /* ================= AI EXPERT LOGIC ================= */
   const askAIAboutPlant = async (queryType) => {
     if (!plant?.common_name) return;
 
@@ -89,36 +80,27 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
     };
 
     try {
+      // Corrected endpoint path: /ai/chat
       const res = await axios.post(`${AI_API}/ai/chat`, {
         message: prompts[queryType],
       });
       setAiResponse(res.data.response);
-    } catch {
-      setAiError("Failed to get AI response.");
+    } catch (err) {
+      setAiError("Failed to get AI response. Please check if AI Service is running.");
     } finally {
       setAiLoading(false);
     }
   };
 
-  /* ================= UI STATES ================= */
-  if (loading)
-    return <div className="text-center py-10">Loading plant details...</div>;
+  if (loading) return <div className="text-center py-10">Loading plant details...</div>;
+  if (error || !plant) return <div className="text-center text-red-600 py-10">{error || "Plant not found."}</div>;
 
-  if (error || !plant)
-    return (
-      <div className="text-center text-red-600 py-10">
-        {error || "Plant not found."}
-      </div>
-    );
-
-  /* ================= UI ================= */
   return (
     <div className="bg-white rounded-lg shadow-xl p-8 my-8 border border-gray-200">
       <div className="flex items-center justify-between mb-6 pb-4 border-b">
         <h1 className="text-4xl font-extrabold text-green-800">
           {plant.common_name || plant.scientific_name}
         </h1>
-
         {token && (
           <button onClick={handleBookmarkToggle}>
             {isBookmarked ? (
@@ -132,62 +114,38 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
 
       {plant.image_url && (
         <div className="mb-6 flex justify-center">
-          <img
-            src={plant.image_url}
-            alt={plant.common_name}
-            className="max-w-lg rounded-lg shadow-md"
-          />
+          <img src={plant.image_url} alt={plant.common_name} className="max-w-lg rounded-lg shadow-md" />
         </div>
       )}
 
       <div className="space-y-4 text-gray-700 text-lg">
-        <p>
-          <strong className="text-green-700">Description:</strong>{" "}
-          {plant.description}
-        </p>
-
-        {plant.scientific_name && (
-          <p className="italic">
-            <strong className="text-green-700">Scientific Name:</strong>{" "}
-            {plant.scientific_name}
-          </p>
-        )}
-
-        {plant.uses && (
-          <p>
-            <strong className="text-green-700">Uses:</strong>{" "}
-            {plant.uses.join(", ")}
-          </p>
-        )}
+        <p><strong className="text-green-700">Description:</strong> {plant.description}</p>
+        {plant.scientific_name && <p className="italic"><strong className="text-green-700">Scientific Name:</strong> {plant.scientific_name}</p>}
+        {plant.uses && <p><strong className="text-green-700">Uses:</strong> {plant.uses.join(", ")}</p>}
       </div>
 
       {/* ================= AI SECTION ================= */}
       <div className="mt-8 pt-6 border-t">
         <h2 className="text-2xl font-bold mb-4">AI Expert Insights</h2>
-
         <div className="flex gap-3 mb-6 flex-wrap">
           {["combinations", "allergies", "allergenic_mixtures"].map((type) => (
             <button
               key={type}
               onClick={() => askAIAboutPlant(type)}
-              className={`px-4 py-2 rounded-full border ${
-                activeQuery === type
-                  ? "bg-green-700 text-white"
-                  : "bg-green-50 text-green-700 hover:bg-green-100"
+              className={`px-4 py-2 rounded-full border transition-colors ${
+                activeQuery === type ? "bg-green-700 text-white" : "bg-green-50 text-green-700 hover:bg-green-100"
               }`}
             >
               {type.replace("_", " ").toUpperCase()}
             </button>
           ))}
         </div>
-        {aiLoading && <p>Thinking...</p>}
-        {aiError && <p className="text-red-600">{aiError}</p>}
 
+        {aiLoading && <p className="text-green-600 font-medium animate-pulse">🌿 AI is thinking...</p>}
+        {aiError && <p className="text-red-600 italic">{aiError}</p>}
         {aiResponse && (
-          <div className="bg-gray-50 p-5 rounded-lg prose max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {aiResponse}
-            </ReactMarkdown>
+          <div className="bg-gray-50 p-6 rounded-lg prose max-w-none border border-gray-100">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{aiResponse}</ReactMarkdown>
           </div>
         )}
       </div>
