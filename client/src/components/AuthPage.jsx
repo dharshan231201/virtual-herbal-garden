@@ -71,16 +71,6 @@ function AuthPage({ onLogin }) {
       <form onSubmit={handleSubmit} className="space-y-6">
         {mode === "register" && (
           <div className="flex gap-2">
-            <input
-              type="text" placeholder="First Name" required
-              className="w-1/2 px-4 py-4 rounded-xl bg-[#ecf9ec] text-green-900 border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-600"
-              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-            />
-            <input
-              type="text" placeholder="Last Name"
-              className="w-1/2 px-4 py-4 rounded-xl bg-[#ecf9ec] text-green-900 border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-600"
-              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-            />
           </div>
         )}
 
