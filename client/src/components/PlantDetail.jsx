@@ -147,11 +147,12 @@ function PlantDetail({ userBookmarks = new Set(), onBookmarkToggled }) {
         {/* AI Output Container - FORCED DARK GREEN TEXT */}
         {aiResponse && (
           <div className="bg-emerald-50 p-8 rounded-2xl border border-emerald-100 shadow-inner">
-            <div className="prose prose-green max-w-none 
-                            prose-headings:text-green-950 prose-headings:font-black
-                            prose-p:text-green-950 prose-p:leading-relaxed prose-p:font-bold
-                            prose-li:text-green-950 prose-li:font-bold
-                            prose-strong:text-green-900 prose-strong:font-black">
+            <div className="prose max-w-none 
+                            text-gray-900
+                            prose-headings:text-green-950
+                            prose-p:text-gray-950
+                            prose-li:text-green-950
+                            prose-strong:text-green-900">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{aiResponse}</ReactMarkdown>
             </div>
           </div>
