@@ -1,0 +1,41 @@
+# herbal-garden-application/templates/alertmanager-config.yaml
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: main-rules-alert-config
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  route:
+    receiver: 'null'
+    routes:
+    - matchers:
+      - name: alertname
+        value: BackendHighErrorRate
+      receiver: 'send-email'
+    - matchers:
+      - name: alertname
+        value: BackendRequestLatencyTooHigh
+      receiver: 'send-email'
+    - matchers:
+      - name: alertname
+        value: HighCpuUsage
+      receiver: 'send-email'
+    - matchers:
+      - name: alertname
+        value: PodRestart
+      receiver: 'send-email'
+  receivers:
+  - name: 'send-email'
+    emailConfigs:
+    - to: dharshan122001@gmail.com
+      from: dharshan122001@gmail.com
+      sendResolved: false
+      smarthost: smtp.gmail.com:587
+      authUsername: dharshan122001@gmail.com
+      authIdentity: dharshan122001@gmail.com
+      authPassword:
+        name: mail-pass  # The name of your Secret
+        key: gmail-pass   # The key within the Secret
+  - name: 'null'
