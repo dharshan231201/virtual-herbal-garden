@@ -1,0 +1,4 @@
+Enable Gmail API 
+created a oauth credentials id : copy the client id and  client secret
+make use of gmail_token.py to create the tokens and paste it in env file and make use of it in backend,commonn.gmail_service.py
+
